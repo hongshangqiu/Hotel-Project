@@ -1,0 +1,157 @@
+.hotel-list-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+// 顶部筛选区域
+.filter-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  
+  .city-filter {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #333;
+    margin-right: 12px;
+    
+    .arrow {
+      font-size: 10px;
+      margin-left: 4px;
+    }
+  }
+  
+  .search-input {
+    flex: 1;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .filter-btn {
+    margin-left: 12px;
+    padding: 8px 16px;
+    background-color: #1890ff;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+  }
+}
+
+// 详细筛选区域
+.filter-section {
+  display: flex;
+  padding: 12px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  
+  .filter-item {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    padding: 8px 0;
+    
+    &.active {
+      color: #1890ff;
+      font-weight: bold;
+    }
+  }
+}
+
+// 酒店列表
+.hotel-list {
+  height: calc(100vh - 100px);
+  padding: 12px 16px;
+}
+
+.hotel-item {
+  display: flex;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  
+  .hotel-image {
+    width: 100px;
+    height: 100px;
+    background-color: #e8e8e8;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    color: #999;
+    margin-right: 12px;
+  }
+  
+  .hotel-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    
+    .hotel-name {
+      .name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        margin-right: 8px;
+      }
+      
+      .stars {
+        font-size: 12px;
+      }
+    }
+    
+    .hotel-rating {
+      .rating-score {
+        font-size: 14px;
+        color: #1890ff;
+        font-weight: bold;
+        margin-right: 4px;
+      }
+      
+      .rating-text {
+        font-size: 12px;
+        color: #52c41a;
+      }
+    }
+    
+    .hotel-address {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .hotel-price {
+      .price-symbol {
+        font-size: 14px;
+        color: #ff4d4f;
+        font-weight: bold;
+      }
+      
+      .price-value {
+        font-size: 20px;
+        color: #ff4d4f;
+        font-weight: bold;
+      }
+      
+      .price-unit {
+        font-size: 12px;
+        color: #999;
+        margin-left: 4px;
+      }
+    }
+  }
+}
+
+.load-more {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 14px;
+  color: #999;
+}
