@@ -16,6 +16,7 @@ export interface IHotel {
   roomType: string;
   status: HotelStatus;
   imageUrl: string;
+  rejectionReason?: string;
 }
 
 export interface IHotelSearchParams {
