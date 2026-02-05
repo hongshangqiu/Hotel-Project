@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { IHotelSearchParams } from '../types/hotel';
+import { IHotelSearchParams } from '../types';
 
 interface HotelState {
   searchParams: IHotelSearchParams;
