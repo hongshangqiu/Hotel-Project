@@ -4,8 +4,10 @@ import { IHotelSearchParams } from '../types/hotel';
 interface HotelState {
   searchParams: IHotelSearchParams;
   calendarVisible: boolean;
+  calendarMode: 'start' | 'end'; // 新增：记录是从“入住”还是“离店”点进来的
   setSearchParams: (params: Partial<IHotelSearchParams>) => void;
-  setCalendarVisible: (visible: boolean) => void;
+  // 更新：允许传入第二个参数 mode
+  setCalendarVisible: (visible: boolean, mode?: 'start' | 'end') => void;
 }
 
 export const useHotelStore = create<HotelState>((set) => ({
@@ -16,8 +18,13 @@ export const useHotelStore = create<HotelState>((set) => ({
     keyword: ''
   },
   calendarVisible: false,
+  calendarMode: 'start', // 默认模式
   setSearchParams: (params) => set((state) => ({
     searchParams: { ...state.searchParams, ...params }
   })),
-  setCalendarVisible: (visible) => set({ calendarVisible: visible }),
+  // 更新方法逻辑
+  setCalendarVisible: (visible, mode = 'start') => set({ 
+    calendarVisible: visible, 
+    calendarMode: mode 
+  }),
 }));
