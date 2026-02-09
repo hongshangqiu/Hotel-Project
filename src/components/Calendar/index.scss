@@ -1,78 +1,56 @@
-.calendar-drawer {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 2000;
-  display: flex;
-  align-items: flex-end;
+.calendar-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
 
-  .calendar-main {
-    width: 100%;
-    background: #fff;
-    border-radius: 32rpx 32rpx 0 0;
-    padding: 40rpx 30rpx;
-    max-width: 600px;
-    margin: 0 auto;
+  .calendar-box {
+    width: 90%; max-width: 450px; // PC端限制宽度，不再铺满屏幕
+    background: #fff; border-radius: 24rpx; padding: 40rpx;
 
-    .header {
-      text-align: center;
-      margin-bottom: 20rpx;
-      .month-title { font-size: 34rpx; font-weight: bold; }
-      .tip { font-size: 24rpx; color: #999; display: block; margin-top: 10rpx; }
-    }
-
-    .week-bar {
-      display: flex;
-      justify-content: space-around;
-      padding: 20rpx 0;
-      color: #bbb;
-      font-size: 24rpx;
-    }
-
-    .days-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      
-      .day-cell {
-        height: 100rpx;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-size: 30rpx;
-        margin-bottom: 10rpx;
-        transition: all 0.2s;
-
-        &.selected {
-          background: #ff4500;
-          color: #fff;
-          border-radius: 12rpx;
-          font-weight: bold;
-        }
-
-        &.in-range {
-          background: #fff0eb;
-          color: #ff4500;
-        }
-
-        .sub-tip { font-size: 20rpx; }
+    .mode-switch {
+      display: flex; border-bottom: 2rpx solid #eee; margin-bottom: 30rpx;
+      .mode-item {
+        flex: 1; text-align: center; padding: 20rpx; font-size: 32rpx;
+        &.on { color: #ff4500; border-bottom: 4rpx solid #ff4500; font-weight: bold; }
       }
     }
 
-    .footer-btns {
-      display: flex;
-      gap: 20rpx;
-      margin-top: 40rpx;
-      padding-bottom: env(safe-area-inset-bottom); // 适配全面屏底部
+    .month-ctrl {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 30rpx;
+      .month-text { font-size: 32rpx; font-weight: bold; }
+      .arrow { font-size: 40rpx; color: #ff4500; padding: 0 30rpx; }
+    }
 
-      button {
-        flex: 1;
-        height: 80rpx;
-        line-height: 80rpx;
-        font-size: 28rpx;
-        border-radius: 40rpx;
-        &.cancel { background: #f5f5f5; color: #666; }
-        &.confirm { background: #ff4500; color: #fff; }
+    // 使用相同的 grid 定义确保对齐
+    .weeks-grid, .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr); // 严格7列
+      text-align: center;
+    }
+
+    .week-cell { color: #999; font-size: 24rpx; padding-bottom: 20rpx; }
+
+    .day-cell {
+      height: 90rpx; display: flex; align-items: center; justify-content: center;
+      position: relative; cursor: pointer;
+
+      .day-text { font-size: 28rpx; z-index: 2; }
+
+      // 深橙色选中（当前模式）
+      &.active-bright {
+        background: #ff4500; color: #fff; border-radius: 50%;
+      }
+
+      // 浅橙色选中（另一半）
+      &.active-faded {
+        background: #ffe4d9; color: #ff4500; border-radius: 50%;
+      }
+
+      // 过去日期禁用
+      &.disabled {
+        .day-text { color: #ddd; } // 数字变淡
+        cursor: not-allowed;
       }
     }
   }

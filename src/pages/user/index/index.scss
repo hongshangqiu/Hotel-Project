@@ -1,83 +1,150 @@
 // src/pages/user/index/index.scss
 
 .home-page {
+  background: #f5f5f5; 
   min-height: 100vh;
-  background-color: #f5f5f5;
-  max-width: 600px; 
-  margin: 0 auto;
   position: relative;
 
-  .banner {
-    height: 380rpx;
-    image { 
-      width: 100%; 
-      height: 100%; 
-    }
+  // --- 移动端 / 通用基础样式 ---
+  .banner { 
+    height: 420rpx; 
+    image { width: 100%; height: 100%; } 
   }
 
   .search-container {
-    background: #fff;
-    margin: -40rpx 30rpx 0; // 向上偏移，使其压在 Banner 上
-    padding: 40rpx 30rpx;
-    border-radius: 20rpx;
-    box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.1);
+    background: #fff; 
+    margin: -40rpx 30rpx 0; // 向上偏移压住Banner
+    padding: 30rpx; 
+    border-radius: 24rpx;
+    box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.08);
     position: relative;
     z-index: 10;
 
     .item {
-      display: flex;
-      align-items: center;
-      padding: 30rpx 0;
+      padding: 30rpx 0; 
       border-bottom: 1rpx solid #f2f2f2;
-      font-size: 28rpx;
-      
-      .label {
+      display: flex; 
+      align-items: center;
+      justify-content: space-between;
+
+      .label { 
+        color: #666; 
+        font-size: 28rpx; 
         width: 160rpx;
-        color: #333;
-        font-weight: 500;
       }
 
-      .date-text {
-        flex: 1;
+      // 对应 TSX 中的 date-val
+      .date-val { 
+        font-weight: bold; 
         font-size: 30rpx;
-        font-weight: bold;
+        color: #333;
+        flex: 1;
+        text-align: left;
       }
 
       input { 
         flex: 1; 
         font-size: 30rpx;
+        font-weight: bold;
       }
     }
 
     .tag-row {
-      display: flex;
-      flex-wrap: wrap; 
+      display: flex; 
+      flex-wrap: wrap;
       padding: 20rpx 0;
-      
-      .tag {
-        background: #f0f8ff;
-        color: #007aff;
-        font-size: 22rpx;
-        padding: 6rpx 18rpx;
-        margin-right: 15rpx;
-        margin-top: 15rpx;
-        border-radius: 8rpx;
+      .tag { 
+        background: #f0f7ff; 
+        color: #007aff; 
+        font-size: 22rpx; 
+        padding: 6rpx 16rpx; 
+        margin-right: 15rpx; 
+        margin-top: 10rpx;
+        border-radius: 8rpx; 
       }
     }
 
     .search-btn {
+      background: linear-gradient(90deg, #ff7f50, #ff4500); 
+      color: #fff; 
+      border-radius: 50rpx; 
       margin-top: 40rpx;
-      background: linear-gradient(to right, #ff7f50, #ff4500);
-      color: #fff;
-      border-radius: 45rpx;
       height: 90rpx;
       line-height: 90rpx;
       font-size: 32rpx;
       font-weight: bold;
       border: none;
 
-      &:active {
+      // 对应 TSX 中的 btn-disabled 逻辑
+      &.btn-disabled {
+        background: #cccccc !important;
+        color: #ffffff !important;
         opacity: 0.8;
+      }
+
+      &:active {
+        opacity: 0.9;
+      }
+    }
+  }
+
+  // --- PC 模式下的深度适配 ---
+  &.pc-mode {
+    background: #eef2f5;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    padding-top: 60px;
+
+    .banner {
+      width: 900px; 
+      height: 320px; 
+      border-radius: 16px; 
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .search-container {
+      width: 900px; 
+      margin-top: -60px;
+      padding: 40px; 
+      border-radius: 16px;
+      display: grid; 
+      // 核心：强制划分为两列
+      grid-template-columns: 1fr 1fr; 
+      gap: 24px;
+      box-sizing: border-box;
+
+      // 1. 目的地：占满第一行
+      .item:nth-child(1) {
+        grid-column: span 2;
+      }
+
+      // 2. 入住日期 & 3. 离店日期：并排在第二行
+      .item:nth-child(2), 
+      .item:nth-child(3) {
+        grid-column: span 1;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 15px 20px;
+        background: #fafafa;
+      }
+
+      // 4. 星级/价格：占满第三行
+      .item:nth-child(4) {
+        grid-column: span 2;
+      }
+
+      // 5. 标签 & 6. 按钮：占满整行
+      .tag-row, 
+      .search-btn {
+        grid-column: span 2;
+        margin-top: 10px;
+      }
+
+      .item {
+        border-bottom: none; // PC端改用边框包裹，不使用底边线
+        .label { width: 120px; }
       }
     }
   }
