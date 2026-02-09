@@ -1,8 +1,9 @@
-import { Component } from 'react';
-import { View } from '@tarojs/components';
+import { View, Text } from '@tarojs/components'
 
-export default class Manage extends Component {
-  render() {
-    return <View>Hotel Manage Page</View>;
-  }
+export default function Manage() {
+  return (
+    <View>
+      <Text>Hotel Manage Page</Text>
+    </View>
+  )
 }
