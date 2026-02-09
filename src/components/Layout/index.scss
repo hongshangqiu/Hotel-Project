@@ -1,0 +1,131 @@
+.layout-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #f2f3f5;
+
+  .pc-layout {
+    display: flex;
+    height: 100%;
+
+    .sidebar {
+      width: 220px;
+      background-color: #001529;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+
+      .logo {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #002140;
+
+        .logo-text {
+          font-size: 18px;
+          font-weight: bold;
+          color: #fff;
+        }
+      }
+
+      .menu {
+        flex: 1;
+        padding: 16px 0;
+
+        .menu-item {
+          height: 40px;
+          padding: 0 24px;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          color: rgba(255, 255, 255, 0.65);
+
+          &:hover {
+            color: #fff;
+            background-color: #1890ff;
+          }
+        }
+      }
+
+      .footer {
+        padding: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+        .user-info {
+          margin-bottom: 8px;
+          text-align: center;
+          font-size: 14px;
+        }
+
+        .logout-btn {
+          text-align: center;
+          color: #ff4d4f;
+          font-size: 14px;
+          cursor: pointer;
+        }
+      }
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .header-bar {
+        height: 64px;
+        background-color: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+
+        .page-title {
+          font-size: 18px;
+          font-weight: 500;
+          color: #333;
+        }
+      }
+
+      .content-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+      }
+    }
+  }
+
+  .mobile-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .mobile-header {
+      height: 48px;
+      background-color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid #f0f0f0;
+
+      .mobile-title {
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .mobile-logout {
+        font-size: 14px;
+        color: #666;
+      }
+    }
+
+    .mobile-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+  }
+}

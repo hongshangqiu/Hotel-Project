@@ -1,0 +1,28 @@
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  .star {
+    color: #ccc; // 默认灰色
+    font-size: 24px;
+    line-height: 1;
+
+    &.active {
+      color: #ffbf00; // 选中黄色
+    }
+  }
+
+  // 尺寸变体
+  &.small .star {
+    font-size: 16px;
+  }
+
+  &.medium .star {
+    font-size: 24px;
+  }
+
+  &.large .star {
+    font-size: 32px;
+  }
+}

@@ -3,7 +3,8 @@ import { IUser, UserRole } from '../types';
 
 interface AppState {
   user: IUser | null;
-  isPC: boolean; // 标识当前是否为 PC 端
+  isPC: boolean;
+  isLogin: boolean;
   login: (user: IUser) => void;
   logout: () => void;
   setDevice: (isPC: boolean) => void;
@@ -11,8 +12,9 @@ interface AppState {
 
 export const useStore = create<AppState>((set) => ({
   user: null,
-  isPC: false, // 默认为移动端，后续可通过 Taro.getSystemInfoSync 更新
-  login: (user) => set({ user }),
-  logout: () => set({ user: null }),
+  isPC: false,
+  isLogin: false,
+  login: (user) => set({ user, isLogin: true }),
+  logout: () => set({ user: null, isLogin: false }),
   setDevice: (isPC) => set({ isPC }),
 }));
