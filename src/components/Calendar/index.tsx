@@ -1,118 +1,124 @@
-import { View, Text, Button } from '@tarojs/components';
-import { useState, useMemo, useEffect } from 'react';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView } from '@tarojs/components';
+import { useState, useMemo } from 'react';
 import { useHotelStore } from '../../shared/store/useHotelStore';
 import './index.scss';
 
 const Calendar = () => {
-  const { calendarVisible, setCalendarVisible, searchParams, setSearchParams, calendarMode } = useHotelStore();
-  const [viewDate, setViewDate] = useState(new Date());
+  const { calendarVisible, setCalendarVisible, searchParams, setSearchParams } = useHotelStore();
   
-  // 这里的 pickMode 初始化受 Store 控制
-  const [pickMode, setPickMode] = useState<'start' | 'end'>('start');
+  // 临时存储选中的日期数组（最多2个）
+  const [tempDates, setTempDates] = useState<string[]>([]);
 
-  // 当日历显示状态或模式变化时，强制同步内部选择模式
-  useEffect(() => {
-    if (calendarVisible) {
-      setPickMode(calendarMode);
+  // 1. 生成未来 6 个月的日历数据
+  const calendarData = useMemo(() => {
+    const months: any[] = [];
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+
+    for (let i = 0; i < 6; i++) {
+      const monthFirstDay = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const y = monthFirstDay.getFullYear();
+      const m = monthFirstDay.getMonth() + 1;
+      const totalDays = new Date(y, m, 0).getDate();
+      const startWeekDay = monthFirstDay.getDay();
+
+      const days: (number | null)[] = [];
+      for (let j = 0; j < startWeekDay; j++) days.push(null);
+      for (let j = 1; j <= totalDays; j++) days.push(j);
+      
+      months.push({ year: y, month: m, days });
     }
-  }, [calendarVisible, calendarMode]);
-
-  // 获取今天零点的时间戳，用于禁用判断
-  const todayTimestamp = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d.getTime();
+    return { months, tStr };
   }, []);
 
-  const days = useMemo(() => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const totalDays = new Date(year, month + 1, 0).getDate();
-    const res: (number | null)[] = [];
-    for (let i = 0; i < firstDay; i++) res.push(null);
-    for (let i = 1; i <= totalDays; i++) res.push(i);
-    return res;
-  }, [viewDate]);
-
-  // Hook 必须在 return 之前
   if (!calendarVisible) return null;
 
-  const handleDateClick = (day: number | null) => {
-    if (!day) return;
-    const year = viewDate.getFullYear();
-    const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
-    const dateStr = `${year}-${month}-${day.toString().padStart(2, '0')}`;
-    const targetTime = new Date(dateStr).getTime();
+  // 2. 核心点击逻辑
+  const handleDayClick = (y: number, m: number, d: number | null) => {
+    if (!d) return;
+    const dateStr = `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const todayTs = new Date(calendarData.tStr).getTime();
+    const targetTs = new Date(dateStr).getTime();
 
-    // 规则校验：不能选今天之前的日期
-    if (targetTime < todayTimestamp) {
-      Taro.showToast({ title: '不能选择过去的日期', icon: 'none' });
-      return;
-    }
+    if (targetTs < todayTs) return; // 虚化日期禁点
 
-    if (pickMode === 'start') {
-      setSearchParams({ startDate: dateStr });
+    if (tempDates.length === 0 || tempDates.length === 2) {
+      // 第一次点击 或 已经选满两个后再点第三个：重新开始
+      setTempDates([dateStr]);
     } else {
-      setSearchParams({ endDate: dateStr });
-    }
+      // 第二次点击
+      if (dateStr === tempDates[0]) return; // 入离同日不响应
 
-    // 校验逻辑：仅提示
-    const start = pickMode === 'start' ? dateStr : searchParams.startDate;
-    const end = pickMode === 'end' ? dateStr : searchParams.endDate;
-    if (start && end && new Date(end) < new Date(start)) {
-      Taro.showToast({ title: '注意：离店早于入住', icon: 'none' });
+      const sorted = [...tempDates, dateStr].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+      setTempDates(sorted);
+      
+      // 同步到 Store 并自动关闭
+      setTimeout(() => {
+        setSearchParams({ startDate: sorted[0], endDate: sorted[1] });
+        setCalendarVisible(false);
+        setTempDates([]); // 重置内部状态供下次打开使用
+      }, 500);
     }
-
-    // 选完即关闭返回主界面
-    setCalendarVisible(false);
   };
 
-  const getDayStatus = (day: number | null) => {
-    if (!day) return '';
-    const year = viewDate.getFullYear();
-    const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
-    const dateStr = `${year}-${month}-${day.toString().padStart(2, '0')}`;
-    const targetTime = new Date(dateStr).getTime();
+  // 3. 获取日期状态样式
+  const getDayStatus = (y: number, m: number, d: number | null) => {
+    if (!d) return { cls: 'empty', label: '' };
+    const dateStr = `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const ts = new Date(dateStr).getTime();
+    const todayTs = new Date(calendarData.tStr).getTime();
 
-    if (targetTime < todayTimestamp) return 'disabled';
+    if (ts < todayTs) return { cls: 'disabled', label: '' };
+    
+    // 如果还没点过，今天显示“今天”字样
+    if (dateStr === calendarData.tStr && tempDates.length === 0) return { cls: 'today', label: '今天' };
 
-    if (pickMode === 'start') {
-      if (dateStr === searchParams.startDate) return 'active-bright';
-      if (dateStr === searchParams.endDate) return 'active-faded';
-    } else {
-      if (dateStr === searchParams.endDate) return 'active-bright';
-      if (dateStr === searchParams.startDate) return 'active-faded';
+    if (tempDates.length === 1 && dateStr === tempDates[0]) return { cls: 'selected single', label: '入住' };
+    
+    if (tempDates.length === 2) {
+      if (dateStr === tempDates[0]) return { cls: 'selected start', label: '入住' };
+      if (dateStr === tempDates[1]) return { cls: 'selected end', label: '离店' };
+      if (ts > new Date(tempDates[0]).getTime() && ts < new Date(tempDates[1]).getTime()) return { cls: 'in-range', label: '' };
     }
-    return '';
+    return { cls: '', label: '' };
   };
 
   return (
-    <View className='calendar-overlay' onClick={() => setCalendarVisible(false)}>
-      <View className='calendar-box' onClick={e => e.stopPropagation()}>
-        <View className='mode-switch'>
-          <View className={`mode-item ${pickMode === 'start' ? 'on' : ''}`} onClick={() => setPickMode('start')}>选入住</View>
-          <View className={`mode-item ${pickMode === 'end' ? 'on' : ''}`} onClick={() => setPickMode('end')}>选离店</View>
+    <View className='cal-v5-root'>
+      <View className='cal-v5-mask' onClick={() => setCalendarVisible(false)} />
+      <View className='cal-v5-content'>
+        <View className='cal-v5-header'>
+          <Text className='close-btn' onClick={() => setCalendarVisible(false)}>×</Text>
+          <Text className='title'>请选择入住离店日期</Text>
         </View>
 
-        <View className='month-ctrl'>
-          <Text className='arrow' onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}>{"<"}</Text>
-          <Text className='month-text'>{viewDate.getFullYear()}年 {viewDate.getMonth() + 1}月</Text>
-          <Text className='arrow' onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}>{">"}</Text>
+        <View className='cal-v5-weeks'>
+          {['日','一','二','三','四','五','六'].map(w => <Text key={w} className='week-item'>{w}</Text>)}
         </View>
 
-        <View className='weeks-grid'>
-          {['日','一','二','三','四','五','六'].map(w => <View key={w} className='week-cell'>{w}</View>)}
-        </View>
-
-        <View className='days-grid'>
-          {days.map((d, i) => (
-            <View key={i} className={`day-cell ${getDayStatus(d)}`} onClick={() => handleDateClick(d)}>
-              <Text className='day-text'>{d}</Text>
+        <ScrollView scrollY className='cal-v5-scroll'>
+          {calendarData.months.map(m => (
+            <View key={`${m.year}-${m.month}`} className='m-section'>
+              <View className='m-title'>{m.year}年{m.month.toString().padStart(2, '0')}月</View>
+              <View className='d-grid'>
+                {m.days.map((day: any, i: number) => {
+                  const { cls, label } = getDayStatus(m.year, m.month, day);
+                  return (
+                    <View 
+                      key={i} 
+                      className={`d-cell ${cls}`} 
+                      onClick={() => handleDayClick(m.year, m.month, day)}
+                    >
+                      <Text className='d-num'>{day}</Text>
+                      {label && <Text className='d-label'>{label}</Text>}
+                    </View>
+                  );
+                })}
+              </View>
             </View>
           ))}
-        </View>
+        </ScrollView>
       </View>
     </View>
   );
