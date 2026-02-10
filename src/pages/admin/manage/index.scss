@@ -1,0 +1,72 @@
+// 引入 NutUI 核心样式（防止全局没引导致 Rate 竖着显示）
+@import "@nutui/nutui-react-taro/dist/style.css";
+
+.admin-manage-page {
+  min-height: 100vh;
+  background-color: #f7f8fa;
+  max-width: 600px; // 与主页面保持一致
+  margin: 0 auto;
+  padding-bottom: 60rpx;
+
+  .page-banner {
+    background: linear-gradient(135deg, #444, #222);
+    padding: 60rpx 40rpx 100rpx;
+    display: flex;
+    flex-direction: column;
+    
+    .banner-title { color: #fff; font-size: 40rpx; font-weight: bold; }
+    .banner-desc { color: #aaa; font-size: 24rpx; margin-top: 10rpx; }
+  }
+
+  .form-card {
+    margin: -40rpx 24rpx 0;
+    background: #fff;
+    border-radius: 24rpx;
+    padding: 20rpx;
+    box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.05);
+
+    .section-title {
+      font-size: 28rpx;
+      font-weight: bold;
+      color: #ff4500; // 使用主题橙色
+      padding: 30rpx 20rpx 10rpx;
+      border-bottom: 1rpx solid #f0f0f0;
+      margin-bottom: 10rpx;
+    }
+
+    // 修复 NutUI Rate 组件垂直显示的 Bug
+    .nut-rate {
+      display: flex !important;
+      flex-direction: row !important;
+      padding: 10rpx 0;
+      
+      .nut-rate-item {
+        margin-right: 10rpx;
+        display: inline-block;
+      }
+    }
+
+    // 表单项美化
+    .nut-form-item {
+      .nut-form-item-label {
+        font-weight: 500;
+        color: #333;
+      }
+    }
+
+    .form-submit-box {
+      padding: 40rpx 20rpx;
+
+      .submit-btn {
+        background: linear-gradient(90deg, #ff7f50, #ff4500) !important;
+        border: none !important;
+        border-radius: 45rpx !important;
+        height: 90rpx !important;
+        font-size: 32rpx !important;
+        font-weight: bold !important;
+        color: #fff !important;
+        box-shadow: 0 8rpx 20rpx rgba(255, 69, 0, 0.3);
+      }
+    }
+  }
+}
