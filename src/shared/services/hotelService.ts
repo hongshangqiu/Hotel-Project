@@ -1,10 +1,7 @@
 import { IHotel, HotelStatus } from '../types/hotel';
+import { LocalStorage, STORAGE_KEYS } from '../utils/LocalStorage';
 
-/**
- * 以下方法的具体实现（如 localStorage 持久化）属于任务 3。
- */
-
-// 静态假数据供 UI 渲染使用
+// 生成 15 条假数据
 const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   id: `${index + 1}`,
   nameCn: `易宿精选酒店 ${index + 1} 号`,
@@ -15,36 +12,214 @@ const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   openingTime: '2025-01-01',
   roomType: '大床房/双床房',
   status: HotelStatus.PUBLISHED,
-  imageUrl: `https://picsum.photos/200/200?random=${index}`
+  imageUrl: `https://picsum.photos/200/200?random=${index}`,
+  description: '酒店位于市中心，交通便利，设施齐全，服务周到。',
+  rating: 4.5,
+  images: [
+    `https://picsum.photos/800/600?random=${index}`,
+    `https://picsum.photos/800/600?random=${index + 100}`,
+    `https://picsum.photos/800/600?random=${index + 200}`
+  ]
 }));
+
+// 获取酒店Map
+const getHotelMap = (): Map<string, IHotel> => {
+  const hotelMap = LocalStorage.get<Map<string, IHotel>>(STORAGE_KEYS.HOTEL_MAP);
+  return hotelMap ? new Map(Object.entries(hotelMap)) : new Map();
+};
+
+// 保存酒店Map到本地存储
+const saveHotelMap = (hotelMap: Map<string, IHotel>): void => {
+  const obj: Record<string, IHotel> = {};
+  hotelMap.forEach((value, key) => {
+    obj[key] = value;
+  });
+  LocalStorage.set(STORAGE_KEYS.HOTEL_MAP, obj);
+};
+
+// 获取当前最大ID
+const getMaxId = (hotelMap: Map<string, IHotel>): number => {
+  let maxId = 0;
+  hotelMap.forEach(hotel => {
+    const numId = parseInt(hotel.id, 10);
+    if (!isNaN(numId) && numId > maxId) {
+      maxId = numId;
+    }
+  });
+  return maxId;
+};
 
 export const hotelService = {
   // 1. 获取列表
   getHotelsByPage: async (page: number, pageSize: number = 5): Promise<IHotel[]> => {
     return new Promise((resolve) => {
       setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotels = Array.from(hotelMap.values());
         const start = (page - 1) * pageSize;
         const end = start + pageSize;
-        resolve(MOCK_HOTELS.slice(start, end));
-      }, 500);
+        resolve(hotels.slice(start, end));
+      }, 300);
     });
   },
 
-  // 2. 根据 ID 获取酒店 (任务3：在此处实现 localStorage 读取)
-  getHotelById: async (id: string): Promise<IHotel | undefined> => {
-    console.log('[任务2占位] 正在查询 ID:', id);
-    return Promise.resolve(MOCK_HOTELS.find(h => h.id === id));
+  /**
+   * 获取酒店详情
+   * @param id 酒店ID
+   * @returns 酒店详情对象，不存在返回 null
+   */
+  getHotelById: async (id: string): Promise<IHotel | null> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotel = hotelMap.get(id) || null;
+        resolve(hotel);
+      }, 200);
+    });
   },
 
-  // 3. 新增酒店 (任务3：在此处实现自动生成 ID 和存入 localStorage)
-  createHotel: async (data: Omit<IHotel, 'id'>): Promise<{ success: boolean; id: string }> => {
-    console.log('[任务2占位] 收到新增数据，等待任务3实现持久化:', data);
-    return Promise.resolve({ success: true, id: 'temp-' + Date.now() });
+  /**
+   * 获取所有酒店列表
+   * @returns 所有酒店数组
+   */
+  getAllHotels: async (): Promise<IHotel[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotels = Array.from(hotelMap.values());
+        resolve(hotels);
+      }, 200);
+    });
   },
 
-  // 4. 更新酒店 (任务3：在此处实现 localStorage 更新)
-  updateHotel: async (id: string, data: Partial<IHotel>): Promise<{ success: boolean }> => {
-    console.log('[任务2占位] 收到更新请求，ID:', id, '数据:', data);
-    return Promise.resolve({ success: true });
+  /**
+   * 新增酒店
+   * 自动生成唯一ID，并添加到本地存储
+   * @param hotel 酒店对象（不包含id）
+   * @returns 新创建的酒店对象（包含生成的id）
+   */
+  createHotel: async (hotel: Omit<IHotel, 'id'>): Promise<IHotel> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const maxId = getMaxId(hotelMap);
+        const newId = `${maxId + 1}`;
+
+        const newHotel: IHotel = {
+          ...hotel,
+          id: newId
+        };
+
+        hotelMap.set(newId, newHotel);
+        saveHotelMap(hotelMap);
+
+        resolve(newHotel);
+      }, 300);
+    });
+  },
+
+  /**
+   * 更新酒店信息
+   * @param id 酒店ID
+   * @param updates 要更新的字段
+   * @returns 更新后的酒店对象，不存在返回 null
+   */
+  updateHotel: async (id: string, updates: Partial<IHotel>): Promise<IHotel | null> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const existingHotel = hotelMap.get(id);
+
+        if (!existingHotel) {
+          resolve(null);
+          return;
+        }
+
+        const updatedHotel: IHotel = {
+          ...existingHotel,
+          ...updates,
+          id: existingHotel.id
+        };
+
+        hotelMap.set(id, updatedHotel);
+        saveHotelMap(hotelMap);
+
+        resolve(updatedHotel);
+      }, 300);
+    });
+  },
+
+  /**
+   * 删除酒店
+   * @param id 酒店ID
+   * @returns 是否删除成功
+   */
+  deleteHotel: async (id: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const deleted = hotelMap.delete(id);
+
+        if (deleted) {
+          saveHotelMap(hotelMap);
+        }
+
+        resolve(deleted);
+      }, 300);
+    });
+  },
+
+  /**
+   * 搜索酒店
+   * @param keyword 关键词
+   * @returns 匹配的酒店数组
+   */
+  searchHotels: async (keyword: string): Promise<IHotel[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotels = Array.from(hotelMap.values());
+
+        if (!keyword.trim()) {
+          resolve(hotels);
+          return;
+        }
+
+        const lowerKeyword = keyword.toLowerCase();
+        const filtered = hotels.filter(hotel =>
+          hotel.nameCn.toLowerCase().includes(lowerKeyword) ||
+          hotel.nameEn.toLowerCase().includes(lowerKeyword) ||
+          hotel.address.toLowerCase().includes(lowerKeyword)
+        );
+
+        resolve(filtered);
+      }, 200);
+    });
+  },
+
+  /**
+   * 重置酒店数据到初始状态
+   * 清除本地存储中的酒店数据，恢复为默认的 Mock 数据
+   */
+  resetToDefault: async (): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newMap = new Map<string, IHotel>();
+        MOCK_HOTELS.forEach(hotel => {
+          newMap.set(hotel.id, hotel);
+        });
+        saveHotelMap(newMap);
+        resolve();
+      }, 300);
+    });
+  },
+
+  /**
+   * 获取酒店数量
+   * @returns 酒店总数
+   */
+  getHotelCount: async (): Promise<number> => {
+    const hotelMap = getHotelMap();
+    return hotelMap.size;
   }
 };
