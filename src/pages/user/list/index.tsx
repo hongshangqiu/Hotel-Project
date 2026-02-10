@@ -15,7 +15,7 @@ const HotelList = () => {
   const loadData = async (currentPage: number) => {
     if (loading || !hasMore) return;
     setLoading(true);
-    
+
     try {
       const res = await hotelService.getHotelsByPage(currentPage);
       if (res.length < 5) {
