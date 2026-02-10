@@ -25,7 +25,23 @@ const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
 // 获取酒店Map
 const getHotelMap = (): Map<string, IHotel> => {
   const hotelMap = LocalStorage.get<Map<string, IHotel>>(STORAGE_KEYS.HOTEL_MAP);
-  return hotelMap ? new Map(Object.entries(hotelMap)) : new Map();
+
+  // 如果本地存储没有数据（首次加载），自动初始化 Mock 数据
+  if (!hotelMap || Object.keys(hotelMap).length === 0) {
+    const newMap = new Map<string, IHotel>();
+    MOCK_HOTELS.forEach(hotel => {
+      newMap.set(hotel.id, hotel);
+    });
+    // 保存到本地存储
+    const obj: Record<string, IHotel> = {};
+    newMap.forEach((value, key) => {
+      obj[key] = value;
+    });
+    LocalStorage.set(STORAGE_KEYS.HOTEL_MAP, obj);
+    return newMap;
+  }
+
+  return new Map(Object.entries(hotelMap));
 };
 
 // 保存酒店Map到本地存储
