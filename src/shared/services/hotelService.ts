@@ -24,5 +24,18 @@ export const hotelService = {
         resolve(MOCK_HOTELS.slice(start, end));
       }, 800); // 模拟网络延迟
     });
+  },
+  getHotelById: async (id: string): Promise<IHotel> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const hotel = MOCK_HOTELS.find((h) => `${h.id}` === `${id}`);
+        if (!hotel) {
+          reject(new Error('hotel not found'));
+          return;
+        }
+        resolve(hotel);
+      }, 300); // 模拟请求延迟
+    })
   }
+
 };
