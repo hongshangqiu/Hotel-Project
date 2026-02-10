@@ -1,57 +1,109 @@
-.calendar-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6); z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
+.cal-v5-root {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000; // 极高层级
+  display: flex;
+  flex-direction: column;
 
-  .calendar-box {
-    width: 90%; max-width: 450px; // PC端限制宽度，不再铺满屏幕
-    background: #fff; border-radius: 24rpx; padding: 40rpx;
+  .cal-v5-mask {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.6);
+  }
 
-    .mode-switch {
-      display: flex; border-bottom: 2rpx solid #eee; margin-bottom: 30rpx;
-      .mode-item {
-        flex: 1; text-align: center; padding: 20rpx; font-size: 32rpx;
-        &.on { color: #ff4500; border-bottom: 4rpx solid #ff4500; font-weight: bold; }
-      }
-    }
+  .cal-v5-content {
+    background: #fff;
+    height: 75vh; // 占用屏幕约 3/4
+    border-radius: 32rpx 32rpx 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+    animation: slideUp 0.3s ease-out;
 
-    .month-ctrl {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 30rpx;
-      .month-text { font-size: 32rpx; font-weight: bold; }
-      .arrow { font-size: 40rpx; color: #ff4500; padding: 0 30rpx; }
-    }
-
-    // 使用相同的 grid 定义确保对齐
-    .weeks-grid, .days-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr); // 严格7列
+    .cal-v5-header {
+      padding: 35rpx 30rpx;
       text-align: center;
+      position: relative;
+      background: #fff;
+      .close-btn {
+        position: absolute; left: 30rpx; top: 20rpx;
+        font-size: 56rpx; color: #999; font-weight: 200;
+      }
+      .title { font-size: 32rpx; font-weight: bold; color: #333; }
     }
 
-    .week-cell { color: #999; font-size: 24rpx; padding-bottom: 20rpx; }
+    .cal-v5-weeks {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 20rpx 0;
+      background: #fff;
+      border-bottom: 1rpx solid #f2f2f2;
+      .week-item { text-align: center; font-size: 24rpx; color: #666; }
+    }
 
-    .day-cell {
-      height: 90rpx; display: flex; align-items: center; justify-content: center;
-      position: relative; cursor: pointer;
+    .cal-v5-scroll {
+      flex: 1;
+      .m-section {
+        .m-title {
+          padding: 50rpx 0 30rpx 40rpx;
+          font-size: 30rpx;
+          font-weight: bold;
+          color: #333;
+        }
+        .d-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          padding-bottom: 30rpx;
 
-      .day-text { font-size: 28rpx; z-index: 2; }
+          .d-cell {
+            height: 110rpx;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 8rpx;
 
-      // 深橙色选中（当前模式）
-      &.active-bright {
-        background: #ff4500; color: #fff; border-radius: 50%;
-      }
+            .d-num { font-size: 28rpx; font-weight: 500; color: #333; }
+            .d-label { font-size: 18rpx; margin-top: 4rpx; }
 
-      // 浅橙色选中（另一半）
-      &.active-faded {
-        background: #ffe4d9; color: #ff4500; border-radius: 50%;
-      }
+            // 1. 虚化样式
+            &.disabled {
+              .d-num { color: #ddd; }
+            }
 
-      // 过去日期禁用
-      &.disabled {
-        .day-text { color: #ddd; } // 数字变淡
-        cursor: not-allowed;
+            // 2. 今天
+            &.today .d-num { color: #ff4500; font-weight: bold; }
+
+            // 3. 选中样式（采用橙色系）
+            &.selected {
+              background: #ff4500; // 选中主色
+              color: #fff;
+              border-radius: 12rpx;
+              .d-num, .d-label { color: #fff; }
+
+              &.start { border-radius: 12rpx 0 0 12rpx; }
+              &.end { border-radius: 0 12rpx 12rpx 0; }
+              &.single { border-radius: 12rpx; }
+            }
+
+            // 4. 区间样式
+            &.in-range {
+              background: #fff0eb; // 浅色背景
+              .d-num { color: #ff4500; }
+            }
+
+            &.empty { visibility: hidden; }
+          }
+        }
       }
     }
   }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
