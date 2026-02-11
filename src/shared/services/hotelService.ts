@@ -1,6 +1,7 @@
 import { IHotel, HotelStatus } from '../types/hotel';
 import { LocalStorage, STORAGE_KEYS } from '../utils/LocalStorage';
 
+
 // 生成 15 条假数据
 const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   id: `${index + 1}`,
@@ -11,6 +12,29 @@ const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   price: 300 + index * 50,
   openingTime: '2025-01-01',
   roomType: '大床房/双床房',
+  // ⭐ 新增房型列表
+  rooms: [
+    {
+      id: 'room-1',
+      name: '高级大床房',
+      price: 350,
+      imageUrl: 'https://picsum.photos/200/150?random=11',
+      size: '28㎡',
+      capacity: 2,
+      bedType: '1.8m 大床',
+      policy: '可免费取消 · 不含早餐',
+    },
+    {
+      id: 'room-2',
+      name: '高级双床房',
+      price: 370,
+      imageUrl: 'https://picsum.photos/200/150?random=12',
+      size: '32㎡',
+      capacity: 2,
+      bedType: '1.2m 双床',
+      policy: '不可取消 · 含早餐',
+    },
+  ],
   status: HotelStatus.PUBLISHED,
   imageUrl: `https://picsum.photos/200/200?random=${index}`,
   description: '酒店位于市中心，交通便利，设施齐全，服务周到。',

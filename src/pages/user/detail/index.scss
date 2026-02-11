@@ -288,124 +288,142 @@
     gap: 30rpx;
   }
 
+/* --- 粘贴开始 --- */
+  
+  /* 单个房型卡片 (已融合新功能并转为 rpx) */
   .room-card {
-    display: flex;
-    background: #fafafa;
-    border-radius: 16rpx;
+    background: #fff;
+    border-radius: 24rpx;
+    margin-bottom: 32rpx;
     overflow: hidden;
+    box-shadow: 0 12rpx 36rpx rgba(0, 0, 0, 0.06);
+  }
 
-    .room-image {
-      width: 280rpx;
-      height: 240rpx;
-    }
+  /* 房型主区域 */
+  .room-main {
+    display: flex;
+    padding: 24rpx;
+  }
 
-    .room-info {
-      flex: 1;
-      padding: 20rpx;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+  /* 房型图片 */
+  .room-img {
+    width: 220rpx;
+    height: 160rpx;
+    border-radius: 16rpx;
+    object-fit: cover;
+    flex-shrink: 0;
+    margin-right: 24rpx;
+  }
 
-      .room-header {
-        display: flex;
-        align-items: center;
-        gap: 16rpx;
+  /* 房型基本信息 */
+  .room-basic {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 
-        .room-name {
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #1a1a1a;
-        }
+  /* 房型名称 */
+  .room-name {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #222;
+    line-height: 1.3;
+  }
 
-        .room-scarce {
-          font-size: 20rpx;
-          color: #fff;
-          background: #ff4d4f;
-          padding: 4rpx 10rpx;
-          border-radius: 4rpx;
-        }
-      }
+  /* 房型描述 */
+  .room-meta {
+    font-size: 24rpx;
+    color: #888;
+    margin: 8rpx 0;
+  }
 
-      .room-desc {
-        font-size: 24rpx;
-        color: #999;
-        margin-top: 8rpx;
-      }
+  /* 房型价格 */
+  .room-price {
+    font-size: 36rpx;
+    font-weight: bold;
+    color: #ff4d4f;
+  }
 
-      .room-facilities {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8rpx;
-        margin-top: 12rpx;
+  .room-expand {
+    font-size: 24rpx;
+    color: #1677ff;
+    margin-top: 12rpx;
+  }
 
-        .facility-tag {
-          font-size: 20rpx;
-          color: #666;
-          background: #f0f0f0;
-          padding: 4rpx 10rpx;
-          border-radius: 4rpx;
-        }
+  /* 展开区域（核心动画） */
+  .room-detail {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease;
 
-        .facility-more {
-          font-size: 20rpx;
-          color: #ff6b00;
-        }
-      }
-
-      .room-price-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 16rpx;
-
-        .price-info {
-          display: flex;
-          align-items: baseline;
-
-          .price-symbol {
-            font-size: 24rpx;
-            color: #ff6b00;
-            font-weight: bold;
-          }
-
-          .price-value {
-            font-size: 44rpx;
-            color: #ff6b00;
-            font-weight: bold;
-          }
-
-          .price-unit {
-            font-size: 24rpx;
-            color: #999;
-            margin-left: 4rpx;
-          }
-
-          .original-price {
-            font-size: 24rpx;
-            color: #ccc;
-            text-decoration: line-through;
-            margin-left: 16rpx;
-          }
-        }
-
-        .book-btn {
-          font-size: 26rpx;
-          color: #fff;
-          background: linear-gradient(135deg, #ff9500, #ff6b00);
-          padding: 12rpx 32rpx;
-          border-radius: 30rpx;
-          border: none;
-
-          &::after {
-            border: none;
-          }
-        }
-      }
+    &.open {
+      max-height: 600rpx;
+      opacity: 1;
     }
   }
+
+  /* 内部内容 */
+  .room-detail-inner {
+    padding: 24rpx 32rpx;
+    background: #fafafa;
+    border-top: 1rpx solid #f0f0f0;
+  }
+
+  /* 入住政策 */
+  .room-policy {
+    font-size: 26rpx;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 24rpx;
+  }
+
+  /* 预定按钮 */
+  .room-book-btn {
+    height: 80rpx;
+    background: linear-gradient(135deg, #1677ff, #4096ff);
+    border-radius: 40rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .room-book-text {
+      color: #fff;
+      font-size: 30rpx;
+      font-weight: 500;
+    }
+  }
+
+  /* 详情说明块 */
+  .detail-box {
+    background: #fff;
+    border-radius: 16rpx;
+    padding: 20rpx;
+    box-sizing: border-box;
+    border: 1rpx solid #eee;
+    margin-bottom: 20rpx;
+  }
+
+  .detail-line {
+    font-size: 26rpx;
+    color: #333;
+    line-height: 1.5;
+    margin-bottom: 12rpx;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+} 
+/* 注意：这里结束了 .room-section 的包裹，下面是新的 Section */
+
+/* 底部留白（防止遮挡） */
+.bottom-space {
+  height: 140rpx;
 }
 
-// 6. 酒店详情
+// 6. 酒店详情 (保留 Main 分支内容)
 .detail-section {
   background: #fff;
   padding: 30rpx;
@@ -465,7 +483,7 @@
   }
 }
 
-// 7. 底部预订栏
+// 7. 底部预订栏 (保留 Main 分支，结构更完整)
 .footer-bar {
   position: fixed;
   bottom: 0;
@@ -476,6 +494,7 @@
   background: #fff;
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
   padding-bottom: env(safe-area-inset-bottom);
+  z-index: 100;
 
   .footer-left {
     display: flex;
@@ -551,13 +570,14 @@
   }
 }
 
-// 日期选择弹窗
+// 日期选择弹窗 (保留 Main 分支)
 .calendar-popup {
   background: #fff;
   border-radius: 24rpx 24rpx 0 0;
   padding-bottom: env(safe-area-inset-bottom);
 
   .calendar-header {
+  /* --- 粘贴结束 --- */
     display: flex;
     justify-content: space-between;
     align-items: center;
