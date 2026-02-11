@@ -41,6 +41,13 @@ const HotelDetail = () => {
     return [];
   }, [hotel]);
 
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+
+  const handleViewRooms = () => {
+    setActiveNav('room');
+    setActiveRoomId(null);
+  };
+
   const handleBack = () => {
     const pages = Taro.getCurrentPages();
     if (pages.length > 1) {
@@ -55,6 +62,7 @@ const HotelDetail = () => {
     setActiveNav(key);
     setScrollIntoView(`section-${key}`);
   };
+
 
   const loadHotel = async (id: string) => {
     if (!id) {
@@ -74,33 +82,28 @@ const HotelDetail = () => {
     }
   };
 
-  const confirmBooking = async () => {
-    if (!hotel) return;
-
-    const content =
-      `酒店：${hotel.nameCn}\n` +
-      `起价：¥${hotel.price}\n` +
-      `房型：${hotel.roomType}\n\n` +
-      '确认预定吗？';
-
-    const res = await Taro.showModal({
-      title: '确认预定',
-      content,
-      confirmText: '确认',
-      cancelText: '取消',
-    });
-
-    if (res.confirm) {
-      Taro.showToast({ title: '预定成功（模拟）', icon: 'success' });
-    }
-  };
-
   useEffect(() => {
     loadHotel(hotelId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotelId]);
 
   const canAutoPlay = bannerImages.length > 1;
+
+  const handleRoomBooking = async (room) => {
+    const res = await Taro.showModal({
+      title: '确认预定',
+      content: `房型：${room.name}\n价格：¥${room.price}`,
+      confirmText: '确认',
+      cancelText: '取消',
+    });
+
+    if (res.confirm) {
+      Taro.showToast({
+        title: '预定成功（模拟）',
+        icon: 'success',
+      });
+    }
+  };
 
   return (
     <View className='detail-page'>
@@ -153,8 +156,9 @@ const HotelDetail = () => {
         </View>
       </View>
 
-      <ScrollView className='content' scrollY scrollIntoView={scrollIntoView} scrollWithAnimation>
-        {/* 基本信息 */}
+      <ScrollView className='content' scrollY scrollWithAnimation>
+
+        {/* 基本信息（始终显示） */}
         <View className='base-info'>
           <View className='name-row'>
             <Text className='name'>{hotel?.nameCn || '-'}</Text>
@@ -170,49 +174,92 @@ const HotelDetail = () => {
           </View>
         </View>
 
+        {/* ===== 详情 Tab ===== */}
+        {activeNav === 'detail' && (
+          <View className='section'>
+            <View className='section-title'>
+              <Text>酒店详情</Text>
+            </View>
 
-
-        {/* 详情 */}
-        <View id='section-detail' className='section'>
-          <View className='section-title'>
-            <Text>酒店详情</Text>
+            <View className='detail-box'>
+              <View className='detail-line'>英文名：{hotel?.nameEn || '-'}</View>
+              <View className='detail-line'>开业时间：{hotel?.openingTime || '-'}</View>
+              <View className='detail-line'>地址：{hotel?.address || '-'}</View>
+              <View className='detail-line'>星级：{hotel ? `${hotel.star}星` : '-'}</View>
+              <View className='detail-line'>起价：¥{hotel?.price ?? '-'}</View>
+            </View>
           </View>
+        )}
 
-          <View className='detail-box'>
-            <View className='detail-line'>英文名：{hotel?.nameEn || '-'}</View>
-            <View className='detail-line'>开业时间：{hotel?.openingTime || '-'}</View>
-            <View className='detail-line'>地址：{hotel?.address || '-'}</View>
-            <View className='detail-line'>星级：{hotel ? `${hotel.star}星` : '-'}</View>
-            <View className='detail-line'>起价：¥{hotel?.price ?? '-'}</View>
-          </View>
-        </View>
+        {/* ===== 房型 Tab ===== */}
+        {activeNav === 'room' && (
+          <View className='section'>
+            <View className='section-title'>
+              <Text>房型</Text>
+            </View>
 
-        {/* 房型 */}
-        <View id='section-room' className='section'>
-          <View className='section-title'>
-            <Text>房型</Text>
-          </View>
-          <View className='detail-box'>
-            <Text className='detail-line'>{hotel?.roomType || '-'}</Text>
-          </View>
-        </View>
+            {hotel?.rooms?.map(room => {
+              const expanded = activeRoomId === room.id;
 
-        <View className='bottom-space' />
+              return (
+                <View key={room.id} className='room-card'>
+                  {/* 基本信息 */}
+                  <View className='room-main'>
+                    <Image className='room-img' src={room.imageUrl} />
+
+                    <View className='room-basic'>
+                      <Text className='room-name'>{room.name}</Text>
+                      <Text className='room-meta'>
+                        {room.size} · 可住 {room.capacity} 人 · {room.bedType}
+                      </Text>
+                      <Text className='room-price'>¥{room.price}</Text>
+
+                      {/* 展开按钮*/}
+                      <Text
+                        className='room-expand'
+                        onClick={() =>
+                          setActiveRoomId(expanded ? null : room.id)
+                        }
+                      >
+                        {expanded ? '收起' : '展开'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* 展开详情（带动画） */}
+                  <View className={`room-detail ${expanded ? 'open' : ''}`}>
+                    <View className='room-detail-inner'>
+                      <Text className='room-policy'>{room.policy}</Text>
+
+                      <View
+                        className='room-book-btn'
+                        onClick={() => handleRoomBooking(room)}
+                      >
+                        <Text className='room-book-text'>预定</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
       </ScrollView>
 
       {/* 底部预定栏 */}
-      <View className='booking-bar'>
-        <View className='booking-left'>
-          <Text className='booking-hint'>起价：¥{hotel?.price ?? '-'}</Text>
+      <View className='action-bar'>
+        <View className='action-info'>
+          <Text className='action-price'>
+            ¥{hotel?.price ?? '-'} 起
+          </Text>
         </View>
 
-        <View
-          className='booking-btn'
-          onClick={confirmBooking}
-        >
-          <Text className='booking-btn-text'>{loading ? '加载中' : '立即预定'}</Text>
+        <View className='action-btn' onClick={handleViewRooms}>
+          <Text className='action-btn-text'>查看可订房型</Text>
         </View>
       </View>
+
     </View>
   );
 };

@@ -209,6 +209,116 @@
     margin-bottom: 10px;
 }
 
+/* 单个房型卡片 */
+.room-card {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+/* 房型主区域（不建议整块点击，但你逻辑上在用） */
+.room-main {
+    display: flex;
+    padding: 12px;
+}
+
+/* 房型图片 */
+.room-img {
+    width: 110px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+/* 房型基本信息 */
+.room-basic {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* 房型名称 */
+.room-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+    line-height: 1.3;
+}
+
+/* 房型描述 */
+.room-meta {
+    font-size: 12px;
+    color: #888;
+    margin: 4px 0;
+}
+
+/* 房型价格 */
+.room-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ff4d4f;
+}
+
+.room-expand {
+    font-size: 12px;
+    color: #1677ff;
+    margin-top: 6px;
+}
+
+
+/* 展开区域 */
+/* 展开容器（动画核心） */
+.room-detail {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+
+/* 展开状态 */
+.room-detail.open {
+    max-height: 300px; // 足够大即可
+    opacity: 1;
+}
+
+/* 内部内容 */
+.room-detail-inner {
+    padding: 12px 16px;
+    background: #fafafa;
+    border-top: 1px solid #f0f0f0;
+}
+
+
+/* 入住政策 */
+.room-policy {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+/* 预定按钮 */
+.room-book-btn {
+    height: 40px;
+    background: linear-gradient(135deg, #1677ff, #4096ff);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 预定按钮文字 */
+.room-book-text {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+}
+
 .detail-box {
     background: #fafafa;
     border-radius: 8px;
@@ -227,47 +337,56 @@
     margin-bottom: 0;
 }
 
+
+
+
+
 /* 给底部预定栏留空间 */
 .bottom-space {
     height: 70px;
 }
 
 /* 底部预定栏 */
-.booking-bar {
-    height: 58px;
+.action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
     background: #fff;
     border-top: 1px solid #eee;
-    padding: 0 12px;
-    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 0 16px;
+    box-sizing: border-box;
+    z-index: 10;
 }
 
-.booking-left {
+.action-info {
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-.booking-hint {
-    font-size: 14px;
-    color: #111;
+.action-price {
+    font-size: 18px;
     font-weight: 600;
+    color: #ff4d4f;
 }
 
-.booking-btn {
-    height: 38px;
-    padding: 0 16px;
-    border-radius: 19px;
-    background: #1677ff;
+.action-btn {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1677ff, #4096ff);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.booking-btn-text {
-    font-size: 14px;
+.action-btn-text {
+    font-size: 15px;
     color: #fff;
-    font-weight: 600;
+    font-weight: 500;
 }

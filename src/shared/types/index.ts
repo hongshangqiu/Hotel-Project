@@ -6,6 +6,18 @@ export enum HotelStatus {
   OFFLINE = 'OFFLINE'
 }
 
+export interface IHotelRoom {
+  id: string;
+  name: string;        // 房型名
+  price: number;       // 价格
+  imageUrl: string;    // 房型图片
+
+  size: string;        // 房间面积，如 28㎡
+  capacity: number;   // 入住人数，如 2
+  bedType: string;    // 床型，如 1.8m大床
+  policy: string;     // 入住政策（文案）
+}
+
 // 酒店详情接口
 export interface IHotel {
   id: string;
@@ -16,6 +28,7 @@ export interface IHotel {
   price: number;
   openingTime: string;
   roomType: string;
+  rooms?: IHotelRoom[];
   status: HotelStatus;
   imageUrl: string;
   rejectionReason?: string;
