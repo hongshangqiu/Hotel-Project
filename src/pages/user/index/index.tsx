@@ -1,13 +1,14 @@
 import { View, Swiper, SwiperItem, Image, Input, Button, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useHotelStore } from '../../../shared/store/useHotelStore';
-import { useEnvironment } from '../../../shared/utils/useEnvironment'; // 引入环境检测Hook
+import { useStore } from '../../../shared/store';
+import { useEnvironment } from '../../../shared/utils/useEnvironment';
 import Calendar from '../../../components/Calendar/index';
 import './index.scss';
 
 const Index = () => {
   const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore();
-  const { isPC } = useEnvironment(); // 获取当前是否为 PC 端
+  const { isPC } = useEnvironment();
 
   /**
    * 校验逻辑：
