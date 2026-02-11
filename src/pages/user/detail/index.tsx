@@ -106,12 +106,14 @@ const HotelDetail = () => {
   };
 
   return (
-    <View className='detail-page'>
-      {/* banner + 顶部返回导航 */}
-      <View className='banner-wrap'>
+    <View className='hotel-detail-page'>
+      {/* ===== Banner 区域 ===== */}
+      <View className='banner-wrapper'>
+
+        {/* 轮播图 */}
         {bannerImages.length > 0 ? (
           <Swiper
-            className='banner'
+            className='banner-swiper'
             circular={canAutoPlay}
             autoplay={canAutoPlay}
             interval={3000}
@@ -120,7 +122,11 @@ const HotelDetail = () => {
           >
             {bannerImages.map((src, idx) => (
               <SwiperItem key={`${src}-${idx}`}>
-                <Image className='banner-img' src={src} mode='aspectFill' />
+                <Image
+                  className='banner-image'
+                  src={src}
+                  mode='aspectFill'
+                />
               </SwiperItem>
             ))}
           </Swiper>
@@ -130,26 +136,33 @@ const HotelDetail = () => {
           </View>
         )}
 
-        <View className='topbar'>
-          <View className='back-btn' onClick={handleBack}>
-            <Text className='back-text'>返回</Text>
+        {/* 顶部覆盖层 */}
+        <View className='banner-topbar'>
+          <View className='topbar-left' onClick={handleBack}>
+            <Text className='topbar-back'>←</Text>
           </View>
-          <Text className='topbar-title'>{hotel?.nameCn || '酒店详情'}</Text>
+
+          <Text className='topbar-title'>
+            {hotel?.nameCn || '酒店详情'}
+          </Text>
+
           <View className='topbar-right' />
         </View>
+
       </View>
 
-      {/* banner 下方导航栏：房型 / 详情 */}
-      <View className='nav-bar'>
+
+      {/* ===== Tab 导航栏（独立出来） ===== */}
+      <View className='tab-nav'>
         <View
-          className={`nav-item ${activeNav === 'detail' ? 'active' : ''}`}
+          className={`tab-item ${activeNav === 'detail' ? 'active' : ''}`}
           onClick={() => scrollTo('detail')}
         >
           <Text>详情</Text>
         </View>
 
         <View
-          className={`nav-item ${activeNav === 'room' ? 'active' : ''}`}
+          className={`tab-item ${activeNav === 'room' ? 'active' : ''}`}
           onClick={() => scrollTo('room')}
         >
           <Text>房型</Text>
@@ -159,24 +172,27 @@ const HotelDetail = () => {
       <ScrollView className='content' scrollY scrollWithAnimation>
 
         {/* 基本信息（始终显示） */}
-        <View className='base-info'>
-          <View className='name-row'>
-            <Text className='name'>{hotel?.nameCn || '-'}</Text>
-            <Text className='star'>{hotel ? `${hotel.star}星` : ''}</Text>
+        <View className='hotel-info-section'>
+          <View className='hotel-header'>
+            <View className='hotel-title-row'>
+              <Text className='hotel-name'>{hotel?.nameCn || '-'}</Text>
+              <Text className='hotel-star'>{hotel ? `${hotel.star}星` : ''}</Text>
+            </View>
+
+            <Text className='hotel-enname'>{hotel?.nameEn || '-'}</Text>
+            <View className='hotel-rating'>
+              <Text className='rating-score '>{hotel?.rating || '-'}分</Text>
+            </View>
+            <View className='hotel-address'>
+              <Text className='address-text'>{hotel?.address || '-'}</Text>
+            </View>
           </View>
 
-          <Text className='address'>{hotel?.address || '-'}</Text>
-
-          <View className='price-row'>
-            <Text className='price-symbol'>¥</Text>
-            <Text className='price-val'>{hotel?.price ?? '-'}</Text>
-            <Text className='price-unit'>起</Text>
-          </View>
         </View>
 
         {/* ===== 详情 Tab ===== */}
         {activeNav === 'detail' && (
-          <View className='section'>
+          <View className='detail-section'>
             <View className='section-title'>
               <Text>酒店详情</Text>
             </View>
@@ -193,7 +209,7 @@ const HotelDetail = () => {
 
         {/* ===== 房型 Tab ===== */}
         {activeNav === 'room' && (
-          <View className='section'>
+          <View className='room-section'>
             <View className='section-title'>
               <Text>房型</Text>
             </View>
@@ -248,14 +264,14 @@ const HotelDetail = () => {
       </ScrollView>
 
       {/* 底部预定栏 */}
-      <View className='action-bar'>
-        <View className='action-info'>
+      <View className='footer-bar'>
+        <View className='footer-left'>
           <Text className='action-price'>
             ¥{hotel?.price ?? '-'} 起
           </Text>
         </View>
 
-        <View className='action-btn' onClick={handleViewRooms}>
+        <View className='footer-book-btn' onClick={handleViewRooms}>
           <Text className='action-btn-text'>查看可订房型</Text>
         </View>
       </View>
