@@ -48,7 +48,7 @@ const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
 
 // 获取酒店Map
 const getHotelMap = (): Map<string, IHotel> => {
-  const hotelMap = LocalStorage.get<Map<string, IHotel>>(STORAGE_KEYS.HOTEL_MAP);
+  const hotelMap = LocalStorage.get<Record<string, IHotel>>(STORAGE_KEYS.HOTEL_MAP);
 
   // 如果本地存储没有数据（首次加载），自动初始化 Mock 数据
   if (!hotelMap || Object.keys(hotelMap).length === 0) {
@@ -91,14 +91,20 @@ const getMaxId = (hotelMap: Map<string, IHotel>): number => {
 
 export const hotelService = {
   // 1. 获取列表
-  getHotelsByPage: async (page: number, pageSize: number = 5): Promise<IHotel[]> => {
+  getHotelsByPage: async (page: number, pageSize: number = 5): Promise<{ list: IHotel[], total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const hotelMap = getHotelMap();
-        const hotels = Array.from(hotelMap.values());
+        const allHotels = Array.from(hotelMap.values());
+        const publishedHotels = allHotels.filter(h => h.status === HotelStatus.PUBLISHED);
+        
         const start = (page - 1) * pageSize;
         const end = start + pageSize;
-        resolve(hotels.slice(start, end));
+        
+        resolve({
+          list: publishedHotels.slice(start, end),
+          total: publishedHotels.length
+        });
       }, 300);
     });
   },

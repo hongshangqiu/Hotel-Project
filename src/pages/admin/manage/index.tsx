@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components';
+import { View, Text, Image } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { useState, useEffect } from 'react';
 import { Form, Input, Button, Rate, TextArea } from '@nutui/nutui-react-taro';
@@ -11,6 +11,9 @@ const HotelManage = () => {
   const hotelId = router.params.id; // 从 URL 获取酒店 ID
   const [form] = Form.useForm();
   const [isEdit, setIsEdit] = useState(false);
+
+  // 监听图片 URL 变化，用于实时预览
+  const imageUrlWatch = Form.useWatch('imageUrl', form);
 
   // 初始化加载：判断是编辑还是新增
   useEffect(() => {
@@ -67,6 +70,18 @@ const HotelManage = () => {
     }
   };
 
+  /**
+   * 修复：增加校验失败的反馈
+   */
+  const onFinishFailed = (values: any, errors: any) => {
+    if (errors && errors.length > 0) {
+      Taro.showToast({
+        title: `请完善: ${errors[0].message}`,
+        icon: 'none'
+      });
+    }
+  };
+
   return (
     <View className='admin-manage-page'>
       {/* 顶部装饰 Banner */}
@@ -79,6 +94,7 @@ const HotelManage = () => {
         <Form
           form={form}
           onFinish={onFinish}
+          onFinishFailed={onFinishFailed} // 绑定校验失败回调
           footer={
             <View className='form-submit-box'>
               <Button block type='primary' nativeType='submit' className='submit-btn'>
@@ -132,6 +148,17 @@ const HotelManage = () => {
 
           <Form.Item label='封面图URL' name='imageUrl'>
             <Input placeholder='请输入封面图片线上链接' />
+          </Form.Item>
+
+          {/* 修复：增加图片预览区域 */}
+          <Form.Item label='图片预览'>
+            <View style={{ width: '120px', height: '80px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden' }}>
+              {imageUrlWatch ? (
+                <Image src={imageUrlWatch} style={{ width: '100%', height: '100%' }} mode='aspectFill' />
+              ) : (
+                <Text style={{ fontSize: '12px', color: '#ccc' }}>暂无图片</Text>
+              )}
+            </View>
           </Form.Item>
 
           <Form.Item label='周边交通' name='attractions'>
