@@ -15,7 +15,7 @@ const HotelList = () => {
   const loadData = async (currentPage: number) => {
     if (loading || !hasMore) return;
     setLoading(true);
-    
+
     try {
       const res = await hotelService.getHotelsByPage(currentPage);
       if (res.length < 5) {
@@ -48,7 +48,13 @@ const HotelList = () => {
 
       <View className='hotel-list'>
         {list.map((hotel) => (
-          <View key={hotel.id} className='hotel-card' onClick={() => Taro.navigateTo({ url: `/pages/user/detail/index?id=${hotel.id}` })}>
+          <View key={hotel.id} className='hotel-card'
+            onClick={() => {
+              console.log(`/pages/user/detail/index?id=${hotel.id}`)
+              window.location.hash = `/pages/user/detail/index?id=${hotel.id}`
+
+            }}
+          >
             <Image className='cover' src={hotel.imageUrl} />
             <View className='info'>
               <View className='name-row'>

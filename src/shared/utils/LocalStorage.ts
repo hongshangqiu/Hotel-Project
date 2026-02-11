@@ -56,7 +56,7 @@ export class LocalStorage {
         serializedValue = localStorage.getItem(fullKey);
       }
 
-      if (serializedValue === null || serializedValue === undefined) {
+      if (serializedValue === null || serializedValue === undefined || serializedValue === '') {
         return defaultValue;
       }
 
