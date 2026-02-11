@@ -261,5 +261,161 @@ export const hotelService = {
   getHotelCount: async (): Promise<number> => {
     const hotelMap = getHotelMap();
     return hotelMap.size;
+  },
+
+  /**
+   * 获取待审核列表
+   * 筛选状态为 PENDING 的酒店
+   * @param page 页码
+   * @param pageSize 每页数量
+   * @returns 待审核酒店列表
+   */
+  getPendingAuditList: async (page: number, pageSize: number = 10): Promise<{ list: IHotel[]; total: number }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const allHotels = Array.from(hotelMap.values());
+        const pendingHotels = allHotels.filter(hotel => hotel.status === HotelStatus.PENDING);
+        const total = pendingHotels.length;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        resolve({
+          list: pendingHotels.slice(start, end),
+          total
+        });
+      }, 300);
+    });
+  },
+
+  /**
+   * 获取已发布列表
+   * 筛选状态为 PUBLISHED 的酒店
+   * @param page 页码
+   * @param pageSize 每页数量
+   * @returns 已发布酒店列表
+   */
+  getPublishedList: async (page: number, pageSize: number = 10): Promise<{ list: IHotel[]; total: number }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const allHotels = Array.from(hotelMap.values());
+        const publishedHotels = allHotels.filter(hotel => hotel.status === HotelStatus.PUBLISHED);
+        const total = publishedHotels.length;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        resolve({
+          list: publishedHotels.slice(start, end),
+          total
+        });
+      }, 300);
+    });
+  },
+
+  /**
+   * 审核通过
+   * 将酒店状态从 PENDING 更新为 PUBLISHED
+   * @param id 酒店ID
+   * @returns 更新后的酒店对象，不存在返回 null
+   */
+  approveHotel: async (id: string): Promise<IHotel | null> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotel = hotelMap.get(id);
+
+        if (!hotel) {
+          resolve(null);
+          return;
+        }
+
+        if (hotel.status !== HotelStatus.PENDING) {
+          resolve(null);
+          return;
+        }
+
+        const updatedHotel: IHotel = {
+          ...hotel,
+          status: HotelStatus.PUBLISHED,
+          rejectionReason: undefined // 清空驳回原因
+        };
+
+        hotelMap.set(id, updatedHotel);
+        saveHotelMap(hotelMap);
+
+        resolve(updatedHotel);
+      }, 300);
+    });
+  },
+
+  /**
+   * 驳回审核
+   * 将酒店状态从 PENDING 更新为 REJECTED，并保存驳回原因
+   * @param id 酒店ID
+   * @param reason 驳回原因
+   * @returns 更新后的酒店对象，不存在返回 null
+   */
+  rejectHotel: async (id: string, reason: string): Promise<IHotel | null> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotel = hotelMap.get(id);
+
+        if (!hotel) {
+          resolve(null);
+          return;
+        }
+
+        if (hotel.status !== HotelStatus.PENDING) {
+          resolve(null);
+          return;
+        }
+
+        const updatedHotel: IHotel = {
+          ...hotel,
+          status: HotelStatus.REJECTED,
+          rejectionReason: reason
+        };
+
+        hotelMap.set(id, updatedHotel);
+        saveHotelMap(hotelMap);
+
+        resolve(updatedHotel);
+      }, 300);
+    });
+  },
+
+  /**
+   * 下线酒店
+   * 将酒店状态从 PUBLISHED 更新为 OFFLINE
+   * @param id 酒店ID
+   * @returns 更新后的酒店对象，不存在返回 null
+   */
+  offlineHotel: async (id: string): Promise<IHotel | null> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const hotel = hotelMap.get(id);
+
+        if (!hotel) {
+          resolve(null);
+          return;
+        }
+
+        if (hotel.status !== HotelStatus.PUBLISHED) {
+          resolve(null);
+          return;
+        }
+
+        const updatedHotel: IHotel = {
+          ...hotel,
+          status: HotelStatus.OFFLINE
+        };
+
+        hotelMap.set(id, updatedHotel);
+        saveHotelMap(hotelMap);
+
+        resolve(updatedHotel);
+      }, 300);
+    });
   }
 };
