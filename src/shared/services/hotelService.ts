@@ -318,6 +318,30 @@ export const hotelService = {
   },
 
   /**
+   * 获取已拒绝列表
+   * 筛选状态为 REJECTED 的酒店
+   * @param page 页码
+   * @param pageSize 每页数量
+   * @returns 已拒绝酒店列表
+   */
+  getRejectedList: async (page: number, pageSize: number = 10): Promise<{ list: IHotel[]; total: number }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const hotelMap = getHotelMap();
+        const allHotels = Array.from(hotelMap.values());
+        const rejectedHotels = allHotels.filter(hotel => hotel.status === HotelStatus.REJECTED);
+        const total = rejectedHotels.length;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        resolve({
+          list: rejectedHotels.slice(start, end),
+          total
+        });
+      }, 300);
+    });
+  },
+
+  /**
    * 审核通过
    * 将酒店状态从 PENDING 更新为 PUBLISHED
    * @param id 酒店ID
