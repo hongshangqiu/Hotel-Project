@@ -7,6 +7,7 @@ import './index.scss';
 
 const HotelList = () => {
   const [list, setList] = useState<IHotel[]>([]);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -18,10 +19,14 @@ const HotelList = () => {
 
     try {
       const res = await hotelService.getHotelsByPage(currentPage);
-      if (res.length < 5) {
+      const { list: newList, total: totalCount } = res;
+      
+      setTotal(totalCount);
+      
+      if (newList.length < 5) {
         setHasMore(false); // 不满5条说明到底了
       }
-      setList(prev => [...prev, ...res]);
+      setList(prev => [...prev, ...newList]);
       setPage(currentPage + 1);
     } catch (err) {
       Taro.showToast({ title: '加载失败', icon: 'none' });
@@ -43,7 +48,7 @@ const HotelList = () => {
   return (
     <View className='list-page'>
       <View className='header'>
-        <Text className='title'>共发现 {list.length} 家酒店</Text>
+        <Text className='title'>共发现 {total} 家酒店</Text>
       </View>
 
       <View className='hotel-list'>
