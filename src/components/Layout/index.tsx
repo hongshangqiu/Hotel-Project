@@ -2,6 +2,7 @@ import { PropsWithChildren, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { useStore } from '@/shared/store'
+import { UserRole } from '@/shared/types'
 import './index.scss'
 
 interface LayoutProps {
@@ -26,11 +27,27 @@ const Layout: React.FC<PropsWithChildren<LayoutProps>> = ({ children, title }) =
     Taro.reLaunch({ url: '/pages/admin/login/index' })
   }
 
-  const menu = [
-    { title: '首页', url: '/pages/admin/manage/index' },
-    { title: '酒店管理', url: '/pages/admin/manage/index' }, // 占位
-    { title: '审核管理', url: '/pages/admin/audit/index' }
-  ]
+  // 根据用户角色显示不同的菜单
+  const getMenuItems = () => {
+    const isAdmin = user?.role === UserRole.ADMIN
+
+    if (isAdmin) {
+      // 管理员菜单
+      return [
+        { title: '首页', url: '/pages/admin/manage/index' },
+        { title: '酒店管理', url: '/pages/admin/manage/index' },
+        { title: '审核管理', url: '/pages/admin/audit/index' }
+      ]
+    } else {
+      // 商户菜单
+      return [
+        { title: '首页', url: '/pages/admin/manage/index' },
+        { title: '酒店管理', url: '/pages/admin/manage/index' }
+      ]
+    }
+  }
+
+  const menu = getMenuItems()
 
   // 未登录或登录页，不显示 Layout
   if (!isLogin || !user) {

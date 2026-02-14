@@ -33,11 +33,11 @@ const Login = () => {
       setLoading(false)
       Taro.showToast({ title: '登录成功', icon: 'success' })
 
-      // Navigate based on role
+      // 使用 reLaunch 跳转，关闭所有页面，避免登录页残留
       if (role === UserRole.ADMIN) {
-        Taro.navigateTo({ url: '/pages/admin/audit/index' })
+        Taro.reLaunch({ url: '/pages/admin/audit/index' })
       } else {
-        Taro.navigateTo({ url: '/pages/admin/manage/index' })
+        Taro.reLaunch({ url: '/pages/admin/manage/index' })
       }
     }, 1000)
   }
