@@ -8,7 +8,8 @@ export default defineAppConfig({
     // 用户端页面
     'pages/user/index/index',
     'pages/user/list/index',
-    'pages/user/detail/index'
+    'pages/user/detail/index',
+    'pages/user/booking/index'
   ],
   window: {
     backgroundTextStyle: 'light',

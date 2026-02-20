@@ -203,26 +203,23 @@
   .hotel-address {
     display: flex;
     align-items: center;
-    padding: 20rpx 0;
-    border-top: 1rpx solid #f0f0f0;
-
-    .address-icon {
-      font-size: 32rpx;
-      margin-right: 12rpx;
-    }
+    gap: 12rpx;
+    margin-top: 12rpx;
+    cursor: pointer;
+    transition: all 0.2s ease;
 
     .address-text {
-      flex: 1;
-      font-size: 28rpx;
+      font-size: 26rpx;
       color: #666;
-      line-height: 1.4;
+      transition: color 0.2s;
     }
 
-    .address-nav {
-      font-size: 26rpx;
-      color: #ff6b00;
-      font-weight: 500;
+    .map-icon {
+      width: 32rpx;
+      height: 32rpx;
+      transition: transform 0.2s;
     }
+
   }
 
   .hotel-opening {
@@ -551,87 +548,69 @@
 // 7. 底部预订栏 (保留 Main 分支，结构更完整)
 .footer-bar {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  height: 120rpx;
+  bottom: 0;
+
+  height: calc(120rpx + env(safe-area-inset-bottom));
+  padding: 0 18rpx env(safe-area-inset-bottom);
+
   display: flex;
-  background: #fff;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
-  padding-bottom: env(safe-area-inset-bottom);
+  align-items: center;
+  gap: 18rpx;
+
+  background: rgba(255, 255, 255, .96);
+  backdrop-filter: blur(12rpx);
+
+  box-shadow:
+    0 -6rpx 24rpx rgba(0, 0, 0, .08),
+    0 -2rpx 6rpx rgba(0, 0, 0, .04);
+
   z-index: 100;
 
+  // 左侧价格
   .footer-left {
+    flex: 1;
     display: flex;
-    width: 240rpx;
-    border-top: 1rpx solid #f0f0f0;
+    align-items: baseline;
+    padding-left: 8rpx;
 
-    .footer-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6rpx;
-
-      .footer-icon {
-        font-size: 40rpx;
-      }
-
-      .footer-text {
-        font-size: 22rpx;
-        color: #666;
-      }
+    .price-unit {
+      font-size: 35rpx;
+      color: #0f3467;
+      margin-left: 60rpx;
     }
   }
 
-  .footer-right {
-    flex: 1;
+  // 右侧按钮
+  .footer-book-btn {
+    width: 320rpx;
+    height: 86rpx;
+
     display: flex;
     align-items: center;
+    justify-content: center;
 
-    .price-summary {
-      flex: 1;
-      padding-left: 24rpx;
+    border-radius: 20rpx;
 
-      .summary-symbol {
-        font-size: 28rpx;
-        color: #ff6b00;
-        font-weight: bold;
-      }
+    background: linear-gradient(135deg, #ff8a00, #ff5e00);
+    color: #fff;
 
-      .summary-value {
-        font-size: 48rpx;
-        color: #ff6b00;
-        font-weight: bold;
-      }
+    font-size: 30rpx;
+    font-weight: 600;
 
-      .summary-unit {
-        font-size: 24rpx;
-        color: #999;
-      }
+    box-shadow:
+      0 8rpx 18rpx rgba(255, 120, 0, .35),
+      inset 0 1rpx 0 rgba(255, 255, 255, .3);
 
-      .summary-text {
-        font-size: 28rpx;
-        color: #999;
-      }
-    }
+    transition: all .15s ease;
+  }
 
-    .footer-book-btn {
-      width: 240rpx;
-      height: 88rpx;
-      line-height: 88rpx;
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #fff;
-      background: linear-gradient(135deg, #ff9500, #ff6b00);
-      border-radius: 0;
-      border: none;
-
-      &::after {
-        border: none;
-      }
-    }
+  .footer-book-btn:active {
+    transform: scale(.97);
+    box-shadow:
+      0 4rpx 10rpx rgba(255, 120, 0, .3),
+      inset 0 1rpx 0 rgba(255, 255, 255, .2);
   }
 }
 
@@ -682,4 +661,26 @@
     font-size: 28rpx;
     color: #999;
   }
+}
+
+// 返回
+.back-btn {
+  position: fixed;
+  left: 24rpx;
+  top: 60rpx;
+  z-index: 999;
+
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+
+  padding: 18rpx 28rpx;
+  border-radius: 999rpx;
+
+  font-size: 26rpx;
+  font-weight: 500;
+
+  backdrop-filter: blur(6rpx);
+
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.15);
+  transition: all 0.15s ease;
 }

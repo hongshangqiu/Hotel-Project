@@ -91,22 +91,67 @@ const getMaxId = (hotelMap: Map<string, IHotel>): number => {
 
 export const hotelService = {
   // 1. 获取列表
-  getHotelsByPage: async (page: number, pageSize: number = 5): Promise<{ list: IHotel[], total: number }> => {
+  getHotelsByPage: async (
+    page: number,
+    pageSize: number = 5,
+    sortType?: 'priceAsc' | 'priceDesc' | 'star',
+    stars?: number[],
+    priceRange?: [number, number]
+  ): Promise<{ list: IHotel[], total: number }> => {
+
     return new Promise((resolve) => {
+
       setTimeout(() => {
-        const hotelMap = getHotelMap();
-        const allHotels = Array.from(hotelMap.values());
-        const publishedHotels = allHotels.filter(h => h.status === HotelStatus.PUBLISHED);
-        
-        const start = (page - 1) * pageSize;
-        const end = start + pageSize;
-        
+
+        const hotelMap = getHotelMap()
+        const allHotels = Array.from(hotelMap.values())
+
+        const publishedHotels = allHotels.filter(
+          h => h.status === HotelStatus.PUBLISHED
+        )
+
+        // ⭐ 筛选
+
+        let filteredHotels = [...publishedHotels]
+
+        // 星级筛选
+        if (stars && stars.length > 0) {
+          filteredHotels = filteredHotels.filter(h =>
+            stars.includes(h.star)
+          )
+        }
+
+        // 价格筛选
+        if (priceRange) {
+          filteredHotels = filteredHotels.filter(h =>
+            h.price >= priceRange[0] && h.price <= priceRange[1]
+          )
+        }
+
+        // ⭐ 排序
+        let sortedHotels = [...filteredHotels]
+
+        if (sortType === 'priceAsc')
+          sortedHotels.sort((a, b) => a.price - b.price)
+
+        if (sortType === 'priceDesc')
+          sortedHotels.sort((a, b) => b.price - a.price)
+
+        if (sortType === 'star')
+          sortedHotels.sort((a, b) => b.star - a.star)
+
+        // ⭐ 分页
+        const start = (page - 1) * pageSize
+        const end = start + pageSize
+
         resolve({
-          list: publishedHotels.slice(start, end),
-          total: publishedHotels.length
-        });
-      }, 300);
-    });
+          list: sortedHotels.slice(start, end),
+          total: sortedHotels.length
+        })
+
+      }, 300)
+
+    })
   },
 
   /**

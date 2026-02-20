@@ -19,6 +19,15 @@ const HotelDetail = () => {
     return inst?.router?.params?.id || '';
   }, []);
 
+
+  const openMap = (address) => {
+    window.open(
+      `https://apis.map.qq.com/uri/v1/search?keyword=${encodeURIComponent(address)}&referer=myapp`
+    )
+  }
+
+
+
   // - 当前 mock：imageUrl 为 string => 1 张图
   // - 未来扩展：若 imageUrl / imageUrls / images 为 string[] => 有几张播几张
   const bannerImages = useMemo((): string[] => {
@@ -82,28 +91,13 @@ const HotelDetail = () => {
     }
   };
 
+
   useEffect(() => {
     loadHotel(hotelId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotelId]);
 
   const canAutoPlay = bannerImages.length > 1;
-
-  const handleRoomBooking = async (room) => {
-    const res = await Taro.showModal({
-      title: '确认预定',
-      content: `房型：${room.name}\n价格：¥${room.price}`,
-      confirmText: '确认',
-      cancelText: '取消',
-    });
-
-    if (res.confirm) {
-      Taro.showToast({
-        title: '预定成功（模拟）',
-        icon: 'success',
-      });
-    }
-  };
 
   return (
     <View className='hotel-detail-page'>
@@ -138,10 +132,6 @@ const HotelDetail = () => {
 
         {/* 顶部覆盖层 */}
         <View className='banner-topbar'>
-          <View className='topbar-left' onClick={handleBack}>
-            <Text className='topbar-back'>←</Text>
-          </View>
-
           <Text className='topbar-title'>
             {hotel?.nameCn || '酒店详情'}
           </Text>
@@ -183,8 +173,18 @@ const HotelDetail = () => {
             <View className='hotel-rating'>
               <Text className='rating-score '>{hotel?.rating || '-'}分</Text>
             </View>
-            <View className='hotel-address'>
-              <Text className='address-text'>{hotel?.address || '-'}</Text>
+            <View
+              className='hotel-address'
+              onClick={() => openMap(hotel?.address)}
+            >
+              <Text className='address-text'>
+                {hotel?.address || '-'}
+              </Text>
+
+              <Image
+                className='map-icon'
+                src='https://api.iconify.design/mdi/map-marker.svg?color=%23ff6b00'
+              />
             </View>
           </View>
 
@@ -249,7 +249,9 @@ const HotelDetail = () => {
 
                       <View
                         className='room-book-btn'
-                        onClick={() => handleRoomBooking(room)}
+                        onClick={() =>
+                          window.location.hash = `/pages/user/booking/index?id=${hotelId}&roomId=${room.id}`
+                        }
                       >
                         <Text className='room-book-text'>预定</Text>
                       </View>
@@ -266,7 +268,7 @@ const HotelDetail = () => {
       {/* 底部预定栏 */}
       <View className='footer-bar'>
         <View className='footer-left'>
-          <Text className='action-price'>
+          <Text className='price-unit'>
             ¥{hotel?.price ?? '-'} 起
           </Text>
         </View>
@@ -275,6 +277,8 @@ const HotelDetail = () => {
           <Text className='action-btn-text'>查看可订房型</Text>
         </View>
       </View>
+
+      <View className='back-btn' onClick={handleBack}>返回</View>
 
     </View>
   );
