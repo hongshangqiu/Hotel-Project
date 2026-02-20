@@ -21,6 +21,8 @@ export interface IHotelRoom {
 // 酒店详情接口
 export interface IHotel {
   id: string;
+  uploadedBy: string;
+  sourceHotelId?: string;
   nameCn: string;
   nameEn: string;
   address: string;

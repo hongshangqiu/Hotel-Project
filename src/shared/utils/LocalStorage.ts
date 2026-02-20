@@ -156,6 +156,7 @@ export class LocalStorage {
 export const STORAGE_KEYS = {
   HOTELS: 'hotels',
   HOTEL_MAP: 'hotel_map',
+  EDIT_HOTEL_ID: 'edit_hotel_id',
   SEARCH_PARAMS: 'search_params',
   USER: 'user',
   FAVORITES: 'favorites',

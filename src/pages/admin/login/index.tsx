@@ -37,7 +37,7 @@ const Login = () => {
       if (role === UserRole.ADMIN) {
         Taro.reLaunch({ url: '/pages/admin/audit/index' })
       } else {
-        Taro.reLaunch({ url: '/pages/admin/manage/index' })
+        Taro.reLaunch({ url: '/pages/admin/merchant/index' })
       }
     }, 1000)
   }
