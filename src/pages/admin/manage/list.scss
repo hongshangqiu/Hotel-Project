@@ -1,0 +1,15 @@
+.merchant-list-container {
+  background: #f4f7f9; min-height: 100vh; padding: 40px;
+  .list-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
+    .title { font-size: 28px; font-weight: bold; color: #2c3e50; }
+  }
+  .card-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+    .hotel-mini-card {
+      background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      .top { display: flex; justify-content: space-between; margin-bottom: 15px; .name { font-weight: bold; font-size: 20px; } }
+      .mid { font-size: 14px; color: #666; margin-bottom: 20px; display: flex; flex-direction: column; gap: 5px; }
+    }
+  }
+}
