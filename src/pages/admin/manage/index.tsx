@@ -1,21 +1,22 @@
 import { View, Text, Image } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { useState, useEffect } from 'react';
-import { Form, Input, Button, Rate, TextArea } from '@nutui/nutui-react-taro';
+import { Form, Input, Button, Rate, TextArea, Row, Col, Tag } from '@nutui/nutui-react-taro';
 import { hotelService } from '../../../shared/services/hotelService';
-import { HotelStatus } from '../../../shared/types/hotel';
+import { HotelStatus, IHotelRoom } from '../../../shared/types/index';
 import './index.scss';
 
 const HotelManage = () => {
   const router = useRouter();
-  const hotelId = router.params.id; // 从 URL 获取酒店 ID
+  const hotelId = router.params.id;
   const [form] = Form.useForm();
   const [isEdit, setIsEdit] = useState(false);
+  const [roomList, setRoomList] = useState<IHotelRoom[]>([]);
+  const [currentStatus, setCurrentStatus] = useState<HotelStatus | null>(null);
 
-  // 监听图片 URL 变化，用于实时预览
+  // 实时监测图片值
   const imageUrlWatch = Form.useWatch('imageUrl', form);
 
-  // 初始化加载：判断是编辑还是新增
   useEffect(() => {
     if (hotelId) {
       setIsEdit(true);
@@ -23,151 +24,172 @@ const HotelManage = () => {
     }
   }, [hotelId]);
 
-  // 获取已有酒店数据并回显
   const loadHotelDetail = async (id: string) => {
     try {
       Taro.showLoading({ title: '加载中...' });
       const data = await hotelService.getHotelById(id);
       if (data) {
-        form.setFieldsValue(data); // 核心：回显数据到表单
-      } else {
-        Taro.showToast({ title: '未找到酒店信息', icon: 'none' });
+        form.setFieldsValue(data);
+        setRoomList(data.rooms || []);
+        setCurrentStatus(data.status);
       }
-    } catch (err) {
-      Taro.showToast({ title: '加载失败', icon: 'error' });
     } finally {
       Taro.hideLoading();
     }
   };
 
-  /**
-   * 表单提交逻辑
-   */
+  const addRoom = () => {
+    const newRoom: IHotelRoom = {
+      id: Date.now().toString(),
+      name: '', price: 0, imageUrl: '', size: '', capacity: 2, bedType: '', policy: '需持证入住'
+    };
+    setRoomList([...roomList, newRoom]);
+  };
+
+  const updateRoom = (id: string, field: keyof IHotelRoom, value: any) => {
+    setRoomList(roomList.map(r => r.id === id ? { ...r, [field]: value } : r));
+  };
+
   const onFinish = async (values: any) => {
-    Taro.showLoading({ title: '同步数据中...', mask: true });
+    if (roomList.length === 0) {
+      Taro.showToast({ title: '请至少添加一个房型', icon: 'none' });
+      return;
+    }
+    Taro.showLoading({ title: '正在提交...', mask: true });
     try {
+      const finalData = { ...values, rooms: roomList };
       if (isEdit && hotelId) {
-        // 编辑模式：调用更新接口
-        await hotelService.updateHotel(hotelId, values);
-        Taro.hideLoading();
-        Taro.showToast({ title: '更新成功', icon: 'success' });
+        await hotelService.updateHotel(hotelId, finalData);
+        Taro.showToast({ title: '保存成功', icon: 'success' });
       } else {
-        // 新增模式：调用创建接口，强制设置状态为“待审核”
-        await hotelService.createHotel({ ...values, status: HotelStatus.PENDING });
-        Taro.hideLoading();
-        Taro.showToast({ title: '发布成功，请等待审核', icon: 'success' });
+        await hotelService.createHotel({ ...finalData, status: HotelStatus.PENDING });
+        Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
       }
-
-      // 成功后延迟 1.5 秒返回列表页，给用户看提示的时间
-      setTimeout(() => {
-        Taro.navigateBack();
-      }, 1500);
-
-    } catch (err) {
+      setTimeout(() => Taro.navigateBack(), 1000);
+    } catch (e) {
+      Taro.showToast({ title: '操作失败', icon: 'none' });
+    } finally {
       Taro.hideLoading();
-      Taro.showToast({ title: '提交失败，请重试', icon: 'none' });
-      console.error('提交报错:', err);
     }
   };
 
-  /**
-   * 修复：增加校验失败的反馈
-   */
-  const onFinishFailed = (values: any, errors: any) => {
-    if (errors && errors.length > 0) {
-      Taro.showToast({
-        title: `请完善: ${errors[0].message}`,
-        icon: 'none'
+  const handleChooseCover = async () => {
+    try {
+      const res = await Taro.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
       });
+      const path = res.tempFilePaths?.[0];
+      if (path) {
+        form.setFieldsValue({ imageUrl: path });
+      }
+    } catch (e) {
+      // 用户取消或无权限
     }
+  };
+
+  const handleRemoveCover = () => {
+    form.setFieldsValue({ imageUrl: '' });
+  };
+
+  const renderStatus = () => {
+    if (!isEdit || !currentStatus) return null;
+    const statusMap = {
+      [HotelStatus.PENDING]: { text: '审核中', type: 'warning' },
+      [HotelStatus.PUBLISHED]: { text: '已发布', type: 'success' },
+      [HotelStatus.REJECTED]: { text: '已驳回', type: 'danger' },
+      [HotelStatus.OFFLINE]: { text: '已下线', type: 'default' },
+    };
+    const config = statusMap[currentStatus];
+    return <Tag type={config.type as any} style={{ marginLeft: '10px' }}>{config.text}</Tag>;
   };
 
   return (
-    <View className='admin-manage-page'>
-      {/* 顶部装饰 Banner */}
-      <View className='page-banner'>
-        <Text className='banner-title'>{isEdit ? '编辑酒店' : '新增酒店录入'}</Text>
-        <Text className='banner-desc'>请准确填写酒店信息，提交后将进入审核流程</Text>
+    <View className='admin-manage-container'>
+      <View className='admin-manage-header'>
+        <Text className='title-main'>{isEdit ? '编辑酒店信息' : '新商户入驻登记'}</Text>
+        {renderStatus()}
       </View>
 
-      <View className='form-card'>
+      <View className='admin-manage-body'>
         <Form
           form={form}
           onFinish={onFinish}
-          onFinishFailed={onFinishFailed} // 绑定校验失败回调
+          onFinishFailed={() => Taro.showToast({ title: '必填项未填满', icon: 'none' })}
           footer={
-            <View className='form-submit-box'>
-              <Button block type='primary' nativeType='submit' className='submit-btn'>
-                {isEdit ? '确认保存修改' : '立即提交发布'}
-              </Button>
-              {/* 取消按钮，提升 UX 体验 */}
-              <Button 
-                block 
-                fill='outline' 
-                className='cancel-btn' 
-                onClick={() => Taro.navigateBack()}
-              >
-                返回不保存
-              </Button>
+            <View className='admin-manage-footer'>
+              <Button className='c-btn' onClick={() => Taro.navigateBack()}>取消</Button>
+              <Button className='s-btn' type='primary' nativeType='submit'>确认提交</Button>
             </View>
           }
         >
-          <View className='section-title'>核心信息</View>
-          
-          <Form.Item label='中文名' name='nameCn' rules={[{ required: true, message: '请输入酒店中文名' }]}>
-            <Input placeholder='请输入酒店中文名称' />
-          </Form.Item>
+          <View className='manage-card'>
+            <View className='manage-card-title'>基本信息</View>
+            <Row gutter={20}>
+              <Col span={12}>
+                <Form.Item label='中文名称' name='nameCn' rules={[{ required: true, message: '必填' }]}>
+                  <Input placeholder='请输入酒店名' />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label='酒店星级' name='star' rules={[{ required: true, message: '必选' }]}>
+                  <Rate />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item label='详细地址' name='address' rules={[{ required: true, message: '必填' }]}>
+              <Input placeholder='请输入详细地理位置' />
+            </Form.Item>
+          </View>
 
-          <Form.Item label='英文名' name='nameEn' rules={[{ required: true, message: '请输入酒店英文名' }]}>
-            <Input placeholder='请输入酒店英文名称' />
-          </Form.Item>
-
-          <Form.Item label='酒店星级' name='star' rules={[{ required: true, message: '请选择星级' }]}>
-            <Rate />
-          </Form.Item>
-
-          <View className='section-title'>位置与价格</View>
-
-          <Form.Item label='详细地址' name='address' rules={[{ required: true, message: '请输入地址' }]}>
-            <Input placeholder='请输入详细地理位置' />
-          </Form.Item>
-
-          <Form.Item label='主打房型' name='roomType' rules={[{ required: true, message: '请输入房型' }]}>
-            <Input placeholder='如：行政大床房' />
-          </Form.Item>
-
-          <Form.Item label='起步价格' name='price' rules={[{ required: true, message: '请输入价格' }]}>
-            <Input type='number' placeholder='请输入每晚价格' />
-          </Form.Item>
-
-          <Form.Item label='开业时间' name='openingTime' rules={[{ required: true, message: '请输入开业日期' }]}>
-            <Input placeholder='格式如：2023-01' />
-          </Form.Item>
-
-          <View className='section-title'>多媒体与活动</View>
-
-          <Form.Item label='封面图URL' name='imageUrl'>
-            <Input placeholder='请输入封面图片线上链接' />
-          </Form.Item>
-
-          {/* 修复：增加图片预览区域 */}
-          <Form.Item label='图片预览'>
-            <View style={{ width: '120px', height: '80px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', overflow: 'hidden' }}>
-              {imageUrlWatch ? (
-                <Image src={imageUrlWatch} style={{ width: '100%', height: '100%' }} mode='aspectFill' />
-              ) : (
-                <Text style={{ fontSize: '12px', color: '#ccc' }}>暂无图片</Text>
-              )}
+          <View className='manage-card'>
+            <View className='manage-card-title'>封面大图</View>
+            <Form.Item name='imageUrl' rules={[{ required: true, message: '请上传图片' }]}>
+              <View className='upload-row'>
+                <Button size='small' type='primary' onClick={handleChooseCover}>选择图片</Button>
+                <Button size='small' onClick={handleRemoveCover}>移除</Button>
+              </View>
+            </Form.Item>
+            
+            <View className='preview-box'>
+              <Text className='p-tip'>上传实时预览：</Text>
+              <View className='p-frame'>
+                {imageUrlWatch ? (
+                  <Image src={imageUrlWatch} mode='aspectFill' style={{ width: '100%', height: '100%' }} />
+                ) : (
+                  <View className='p-none'>暂未选择图片</View>
+                )}
+              </View>
             </View>
-          </Form.Item>
+          </View>
 
-          <Form.Item label='周边交通' name='attractions'>
-            <TextArea placeholder='请输入周边热门景点、交通枢纽描述' maxLength={100} showCount />
-          </Form.Item>
+          <View className='manage-card'>
+            <View className='manage-card-title flex-header'>
+              <Text>房型管理</Text>
+              <Button size='small' type='success' onClick={addRoom}>+ 增加房型</Button>
+            </View>
+            {roomList.map((room, index) => (
+              <View key={room.id} className='room-row'>
+                <View className='r-head'>
+                  <Text>房型 #{index + 1}</Text>
+                  <Text className='r-del' onClick={() => setRoomList(roomList.filter(r => r.id !== room.id))}>删除</Text>
+                </View>
+                <Row gutter={10}>
+                  <Col span={8}><Input value={room.name} placeholder='名称' onChange={v => updateRoom(room.id, 'name', v)} /></Col>
+                  <Col span={8}><Input type='number' value={String(room.price)} placeholder='价格' onChange={v => updateRoom(room.id, 'price', v)} /></Col>
+                  <Col span={8}><Input value={room.size} placeholder='面积' onChange={v => updateRoom(room.id, 'size', v)} /></Col>
+                </Row>
+              </View>
+            ))}
+          </View>
 
-          <Form.Item label='优惠信息' name='discountInfo'>
-            <Input placeholder='如：新店限时 8 折' />
-          </Form.Item>
+          <View className='manage-card'>
+            <View className='manage-card-title'>其他资料</View>
+            <Form.Item label='开业日期' name='openingTime' rules={[{ required: true, message: '必填' }]}>
+              <Input placeholder='如 2023-01' />
+            </Form.Item>
+          </View>
         </Form>
       </View>
     </View>
