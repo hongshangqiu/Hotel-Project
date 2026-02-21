@@ -65,6 +65,7 @@ const HotelManage = () => {
       address: original.address || '',
       imageUrl: original.imageUrl || '',
       openingTime: original.openingTime || '',
+      nearbyIntro: original.nearbyIntro || '',
       rooms: normalizeRooms(original.rooms || []),
     };
     const next = {
@@ -73,6 +74,7 @@ const HotelManage = () => {
       address: updates.address || '',
       imageUrl: updates.imageUrl || '',
       openingTime: updates.openingTime || '',
+      nearbyIntro: updates.nearbyIntro || '',
       rooms: normalizeRooms(updates.rooms || []),
     };
     return JSON.stringify(current) !== JSON.stringify(next);
@@ -91,6 +93,10 @@ const HotelManage = () => {
   };
 
   const onFinish = async (values: any) => {
+    if (values.nearbyIntro && values.nearbyIntro.length > 200) {
+      Taro.showToast({ title: '周边简介不能超过200字', icon: 'none' });
+      return;
+    }
     if (roomList.length === 0) {
       Taro.showToast({ title: '请至少添加一个房型', icon: 'none' });
       return;
@@ -273,6 +279,9 @@ const HotelManage = () => {
             <View className='manage-card-title'>其他资料</View>
             <Form.Item label='开业日期' name='openingTime' rules={[{ required: true, message: '必填' }]}>
               <Input placeholder='如 2023-01' />
+            </Form.Item>
+            <Form.Item label='周边简介' name='nearbyIntro'>
+              <TextArea maxLength={200} placeholder='周边交通、配套、地标等（不超过200字）' />
             </Form.Item>
           </View>
         </Form>

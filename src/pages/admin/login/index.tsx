@@ -20,6 +20,13 @@ const Login = () => {
       return
     }
 
+    if (role === UserRole.ADMIN) {
+      if (username !== 'admin' || password !== '123456') {
+        Taro.showToast({ title: '管理员账号或密码错误', icon: 'none' })
+        return
+      }
+    }
+
     setLoading(true)
     // Mock login
     setTimeout(() => {

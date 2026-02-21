@@ -34,6 +34,7 @@ export interface IHotel {
   status: HotelStatus;
   imageUrl: string;
   rejectionReason?: string;
+  nearbyIntro?: string;
   description?: string; // 从 index.ts 补充
   rating?: number; // 从 index.ts 补充
   images?: string[]; // 从 index.ts 补充

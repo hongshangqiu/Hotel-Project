@@ -6,6 +6,7 @@ import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel } from '../../../shared/types/hotel';
 import { UserRole } from '../../../shared/types';
 import { useStore } from '../../../shared/store';
+import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import './index.scss';
 
 // 预设的驳回原因选项
@@ -217,6 +218,17 @@ const AuditPage = () => {
             </View>
             <View className="hotel-actions">
               <Button
+                type="default"
+                size="small"
+                className="action-btn view-btn"
+                onClick={() => {
+                  LocalStorage.set(STORAGE_KEYS.VIEW_HOTEL_ID, hotel.id);
+                  Taro.navigateTo({ url: '/pages/admin/audit/detail/index' });
+                }}
+              >
+                查看
+              </Button>
+              <Button
                 type="success"
                 size="small"
                 className="action-btn approve-btn"
@@ -280,6 +292,17 @@ const AuditPage = () => {
                 </View>
                 <View className="hotel-actions">
                   <Button
+                    type="default"
+                    size="small"
+                    className="action-btn view-btn"
+                    onClick={() => {
+                      LocalStorage.set(STORAGE_KEYS.VIEW_HOTEL_ID, hotel.id);
+                      Taro.navigateTo({ url: '/pages/admin/audit/detail/index' });
+                    }}
+                  >
+                    查看
+                  </Button>
+                  <Button
                     type="warning"
                     size="small"
                     className="action-btn offline-btn"
@@ -323,6 +346,19 @@ const AuditPage = () => {
               {hotel.rejectionReason && (
                 <Text className="reject-reason">驳回原因: {hotel.rejectionReason}</Text>
               )}
+            </View>
+            <View className="hotel-actions">
+              <Button
+                type="default"
+                size="small"
+                className="action-btn view-btn"
+                onClick={() => {
+                  LocalStorage.set(STORAGE_KEYS.VIEW_HOTEL_ID, hotel.id);
+                  Taro.navigateTo({ url: '/pages/admin/audit/detail/index' });
+                }}
+              >
+                查看
+              </Button>
             </View>
           </View>
         ))}

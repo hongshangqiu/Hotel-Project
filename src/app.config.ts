@@ -6,6 +6,7 @@ export default defineAppConfig({
     'pages/admin/manage/list',   // 商户酒店列表（后台首页）
     'pages/admin/manage/index',
     'pages/admin/audit/index',
+    'pages/admin/audit/detail/index',
 
     // 用户端页面
     'pages/user/index/index',
