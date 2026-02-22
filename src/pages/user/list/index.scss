@@ -9,17 +9,201 @@
 
   .header {
     padding: 20rpx 0;
-    .title { font-size: 28rpx; color: #999; }
+
+    .title {
+      font-size: 28rpx;
+      color: #999;
+    }
+  }
+
+  .toolbar {
+    position: relative;
+    padding: 20rpx 30rpx;
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    background: #fff;
+    border-bottom: 1rpx solid #f0f0f0;
+
+    /* 按钮 */
+    &-item {
+      background: #fff;
+      border: 1rpx solid #eaeaea;
+      padding: 14rpx 30rpx;
+      border-radius: 999rpx;
+      font-size: 26rpx;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10rpx;
+
+      &:active {
+        background: #f5f5f5;
+      }
+
+      .arrow {
+        font-size: 22rpx;
+        color: #999;
+      }
+    }
+
+    /* 排序下拉 */
+    .sort-panel {
+      position: absolute;
+      top: 90rpx;
+      left: 0;
+      width: 260rpx;
+      background: #fff;
+      border-radius: 16rpx;
+      box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.08);
+      z-index: 10;
+      overflow: hidden;
+
+      .sort-item {
+        padding: 24rpx;
+        font-size: 28rpx;
+        color: #333;
+        transition: background 0.15s;
+
+        &:active {
+          background: #f7f7f7;
+        }
+
+        &.active {
+          color: #ff6b00;
+          font-weight: 600;
+          background: #fff7f2;
+        }
+      }
+    }
+  }
+
+  /* 遮罩 */
+  .filter-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+
+    .filter-panel {
+      width: 100%;
+      background: #fff;
+      border-radius: 28rpx 28rpx 0 0;
+      padding: 36rpx 30rpx 30rpx;
+      box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.08);
+      animation: slideUp 0.25s ease;
+
+      .filter-title {
+        font-size: 34rpx;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 28rpx;
+      }
+
+      .filter-section {
+        margin-bottom: 36rpx;
+
+        .section-title {
+          font-size: 28rpx;
+          font-weight: 600;
+          margin-bottom: 18rpx;
+          color: #333;
+        }
+
+        .option-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 18rpx;
+
+          .option {
+            padding: 16rpx 34rpx;
+            border-radius: 999rpx;
+            background: #f5f5f5;
+            font-size: 26rpx;
+            color: #333;
+            transition: all 0.15s ease;
+
+            &:active {
+              transform: scale(0.95);
+            }
+
+            &.active {
+              background: #ff6b00;
+              color: #fff;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+
+      .filter-actions {
+        display: flex;
+        gap: 20rpx;
+        margin-top: 20rpx;
+
+        .btn {
+          flex: 1;
+          text-align: center;
+          padding: 22rpx 0;
+          border-radius: 14rpx;
+          font-size: 30rpx;
+          font-weight: 600;
+
+          &.reset {
+            background: #f2f2f2;
+            color: #333;
+          }
+
+          &.confirm {
+            background: #ff6b00;
+            color: #fff;
+          }
+        }
+      }
+    }
+  }
+
+  /* 动画 */
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
   .hotel-list {
+    .empty {
+      padding: 120rpx 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      &-img {
+        width: 220rpx;
+        height: 220rpx;
+        opacity: 0.7;
+        margin-bottom: 20rpx;
+      }
+
+      &-text {
+        font-size: 28rpx;
+        color: #999;
+      }
+    }
+
     .hotel-card {
       background: #fff;
       border-radius: 16rpx;
       margin-bottom: 30rpx;
       overflow: hidden;
       display: flex;
-      box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 
       .cover {
         width: 240rpx;
@@ -41,30 +225,30 @@
           align-items: flex-start;
           margin-bottom: 8rpx;
 
-          .name { 
-            font-size: 32rpx; 
-            font-weight: bold; 
-            color: #333; 
+          .name {
+            font-size: 32rpx;
+            font-weight: bold;
+            color: #333;
             line-height: 1.4;
           }
 
-          .star { 
-            font-size: 22rpx; 
-            color: #ff9900; 
-            background: #fff5e6; 
-            padding: 4rpx 12rpx; 
+          .star {
+            font-size: 22rpx;
+            color: #ff9900;
+            background: #fff5e6;
+            padding: 4rpx 12rpx;
             margin-top: 8rpx; // 与名字的间距
             border-radius: 6rpx;
-            
+
             // 确保星级标签内部不换行，且作为独立块显示
             display: inline-block;
-            white-space: nowrap; 
+            white-space: nowrap;
           }
         }
 
-        .address { 
-          font-size: 24rpx; 
-          color: #666; 
+        .address {
+          font-size: 24rpx;
+          color: #666;
           margin-top: 4rpx;
           line-height: 1.4;
         }
@@ -73,10 +257,21 @@
           text-align: right;
           color: #ff4500;
           margin-top: 10rpx;
-          
-          .price-symbol { font-size: 24rpx; }
-          .price-val { font-size: 44rpx; font-weight: bold; margin: 0 4rpx; }
-          .price-unit { font-size: 24rpx; color: #999; }
+
+          .price-symbol {
+            font-size: 24rpx;
+          }
+
+          .price-val {
+            font-size: 44rpx;
+            font-weight: bold;
+            margin: 0 4rpx;
+          }
+
+          .price-unit {
+            font-size: 24rpx;
+            color: #999;
+          }
         }
       }
     }
@@ -88,4 +283,30 @@
     color: #999;
     font-size: 24rpx;
   }
+
+  .floating-back {
+    position: fixed;
+    left: 24rpx;
+    bottom: 60rpx;
+    z-index: 999;
+
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+
+    padding: 18rpx 28rpx;
+    border-radius: 999rpx;
+
+    font-size: 26rpx;
+    font-weight: 500;
+
+    backdrop-filter: blur(6rpx);
+
+    box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.15);
+    transition: all 0.15s ease;
+  }
+
+
 }
+
+
+// 待整理

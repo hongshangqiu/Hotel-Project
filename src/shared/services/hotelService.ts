@@ -69,19 +69,65 @@ const getLocalData = (): Record<string, IHotel> => {
 };
 
 export const hotelService = {
-  // 1. 列表页：返回带 total 的数据
-  getHotelsByPage: async (page: number, pageSize: number = 5): Promise<{ list: IHotel[], total: number }> => {
+// 1. 获取列表（支持分页、排序、筛选）
+  getHotelsByPage: async (
+    page: number,
+    pageSize: number = 5,
+    sortType?: 'priceAsc' | 'priceDesc' | 'star',
+    stars?: number[],
+    priceRange?: [number, number]
+  ): Promise<{ list: IHotel[], total: number }> => {
     return new Promise((resolve) => {
-      const allMap = getLocalData();
-      const published = Object.values(allMap).filter(h => h.status === HotelStatus.PUBLISHED);
-      const start = (page - 1) * pageSize;
-      resolve({
-        list: published.slice(start, start + pageSize),
-        total: published.length
-      });
+      setTimeout(() => {
+        // 修正：使用当前文件定义的 getLocalData，并将 Record 转换为数组
+        const hotelMap = getLocalData();
+        const allHotels = Object.values(hotelMap);
+
+        const publishedHotels = allHotels.filter(
+          h => h.status === HotelStatus.PUBLISHED
+        );
+
+        // ⭐ 筛选
+        let filteredHotels = [...publishedHotels];
+
+        // 星级筛选
+        if (stars && stars.length > 0) {
+          filteredHotels = filteredHotels.filter(h =>
+            stars.includes(h.star)
+          );
+        }
+
+        // 价格筛选
+        if (priceRange) {
+          filteredHotels = filteredHotels.filter(h =>
+            h.price >= priceRange[0] && h.price <= priceRange[1]
+          );
+        }
+
+        // ⭐ 排序
+        let sortedHotels = [...filteredHotels];
+
+        if (sortType === 'priceAsc')
+          sortedHotels.sort((a, b) => a.price - b.price);
+
+        if (sortType === 'priceDesc')
+          sortedHotels.sort((a, b) => b.price - a.price);
+
+        if (sortType === 'star')
+          sortedHotels.sort((a, b) => b.star - a.star);
+
+        // ⭐ 分页
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+
+        resolve({
+          list: sortedHotels.slice(start, end),
+          total: sortedHotels.length
+        });
+
+      }, 300);
     });
   },
-
   // 管理端：待审核列表
   getPendingAuditList: async (page: number, pageSize: number = 10): Promise<{ list: IHotel[], total: number }> => {
     return new Promise((resolve) => {
