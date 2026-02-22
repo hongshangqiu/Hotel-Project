@@ -4,13 +4,16 @@ import { useState } from 'react';
 import { Tag, Button, Empty } from '@nutui/nutui-react-taro';
 import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel, HotelStatus } from '../../../shared/types/index';
+import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import { useStore } from '../../../shared/store';
 import './list.scss';
 
 const MerchantList = () => {
   const [list, setList] = useState<IHotel[]>([]);
+  const { user } = useStore();
 
   useDidShow(() => {
-    hotelService.getMerchantHotels().then(setList);
+    hotelService.getMerchantHotels(user?.username).then(setList);
   });
 
   const getStatusInfo = (s: HotelStatus) => {
@@ -41,7 +44,17 @@ const MerchantList = () => {
               <Text>房型数量：{h.rooms?.length || 0}</Text>
               <Text>当前起价：¥{h.price}</Text>
             </View>
-            <Button block size='small' fill='outline' onClick={() => Taro.navigateTo({ url: `/pages/admin/manage/index?id=${h.id}` })}>编辑详情</Button>
+            <Button
+              block
+              size='small'
+              fill='outline'
+              onClick={() => {
+                LocalStorage.set(STORAGE_KEYS.EDIT_HOTEL_ID, h.id);
+                Taro.navigateTo({ url: '/pages/admin/manage/index' });
+              }}
+            >
+              编辑详情
+            </Button>
           </View>
         )) : <Empty description="暂无数据" />}
       </View>

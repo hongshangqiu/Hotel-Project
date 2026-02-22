@@ -20,6 +20,13 @@ const Login = () => {
       return
     }
 
+    if (role === UserRole.ADMIN) {
+      if (username !== 'admin' || password !== '123456') {
+        Taro.showToast({ title: '管理员账号或密码错误', icon: 'none' })
+        return
+      }
+    }
+
     setLoading(true)
     // Mock login
     setTimeout(() => {
@@ -37,7 +44,7 @@ const Login = () => {
       if (role === UserRole.ADMIN) {
         Taro.reLaunch({ url: '/pages/admin/audit/index' })
       } else {
-        Taro.reLaunch({ url: '/pages/admin/manage/index' })
+        Taro.reLaunch({ url: '/pages/admin/merchant/index' })
       }
     }, 1000)
   }

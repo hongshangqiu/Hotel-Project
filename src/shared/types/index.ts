@@ -21,6 +21,8 @@ export interface IHotelRoom {
 // 酒店详情接口
 export interface IHotel {
   id: string;
+  uploadedBy: string;
+  sourceHotelId?: string;
   nameCn: string;
   nameEn: string;
   address: string;
@@ -32,6 +34,7 @@ export interface IHotel {
   status: HotelStatus;
   imageUrl: string;
   rejectionReason?: string;
+  nearbyIntro?: string;
   description?: string; // 从 index.ts 补充
   rating?: number; // 从 index.ts 补充
   images?: string[]; // 从 index.ts 补充

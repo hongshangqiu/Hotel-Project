@@ -3,16 +3,20 @@ import Taro, { useRouter } from '@tarojs/taro';
 import { useState, useEffect } from 'react';
 import { Form, Input, Button, Rate, TextArea, Row, Col, Tag } from '@nutui/nutui-react-taro';
 import { hotelService } from '../../../shared/services/hotelService';
-import { HotelStatus, IHotelRoom } from '../../../shared/types/index';
+import { HotelStatus, IHotel, IHotelRoom } from '../../../shared/types/index';
+import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import { useStore } from '../../../shared/store';
 import './index.scss';
 
 const HotelManage = () => {
   const router = useRouter();
-  const hotelId = router.params.id;
+  const hotelId = router.params.id || LocalStorage.get<string>(STORAGE_KEYS.EDIT_HOTEL_ID) || '';
   const [form] = Form.useForm();
   const [isEdit, setIsEdit] = useState(false);
   const [roomList, setRoomList] = useState<IHotelRoom[]>([]);
   const [currentStatus, setCurrentStatus] = useState<HotelStatus | null>(null);
+  const { user } = useStore();
+  const [originalHotel, setOriginalHotel] = useState<IHotel | null>(null);
 
   // 实时监测图片值
   const imageUrlWatch = Form.useWatch('imageUrl', form);
@@ -30,12 +34,50 @@ const HotelManage = () => {
       const data = await hotelService.getHotelById(id);
       if (data) {
         form.setFieldsValue(data);
-        setRoomList(data.rooms || []);
+        setRoomList((data.rooms || []).map(room => ({
+          ...room,
+          size: String(room.size || '').replace(/㎡/g, ''),
+        })));
         setCurrentStatus(data.status);
+        setOriginalHotel(data);
       }
     } finally {
       Taro.hideLoading();
     }
+  };
+
+  const normalizeRooms = (rooms: IHotelRoom[] = []) =>
+    rooms.map(room => ({
+      name: room.name || '',
+      price: Number(room.price || 0),
+      imageUrl: room.imageUrl || '',
+      size: room.size || '',
+      capacity: Number(room.capacity || 0),
+      bedType: room.bedType || '',
+      policy: room.policy || '',
+    }));
+
+  const hasChanges = (updates: any, original: IHotel | null) => {
+    if (!original) return true;
+    const current = {
+      nameCn: original.nameCn || '',
+      star: Number(original.star || 0),
+      address: original.address || '',
+      imageUrl: original.imageUrl || '',
+      openingTime: original.openingTime || '',
+      nearbyIntro: original.nearbyIntro || '',
+      rooms: normalizeRooms(original.rooms || []),
+    };
+    const next = {
+      nameCn: updates.nameCn || '',
+      star: Number(updates.star || 0),
+      address: updates.address || '',
+      imageUrl: updates.imageUrl || '',
+      openingTime: updates.openingTime || '',
+      nearbyIntro: updates.nearbyIntro || '',
+      rooms: normalizeRooms(updates.rooms || []),
+    };
+    return JSON.stringify(current) !== JSON.stringify(next);
   };
 
   const addRoom = () => {
@@ -51,18 +93,50 @@ const HotelManage = () => {
   };
 
   const onFinish = async (values: any) => {
+    if (values.nearbyIntro && values.nearbyIntro.length > 200) {
+      Taro.showToast({ title: '周边简介不能超过200字', icon: 'none' });
+      return;
+    }
     if (roomList.length === 0) {
       Taro.showToast({ title: '请至少添加一个房型', icon: 'none' });
       return;
     }
     Taro.showLoading({ title: '正在提交...', mask: true });
     try {
-      const finalData = { ...values, rooms: roomList };
+      const finalData = {
+        ...values,
+        rooms: roomList.map(room => ({
+          ...room,
+          size: room.size ? `${String(room.size).replace(/㎡/g, '')}㎡` : '',
+        })),
+      };
       if (isEdit && hotelId) {
-        await hotelService.updateHotel(hotelId, finalData);
-        Taro.showToast({ title: '保存成功', icon: 'success' });
+        if (currentStatus === HotelStatus.PUBLISHED) {
+          await hotelService.createHotel({
+            ...finalData,
+            status: HotelStatus.PENDING,
+            uploadedBy: originalHotel?.uploadedBy || user?.username || 'admin',
+            sourceHotelId: hotelId,
+          });
+          Taro.showToast({ title: '已提交变更申请，请等待审核', icon: 'success' });
+        } else {
+          if (currentStatus === HotelStatus.REJECTED && !hasChanges(finalData, originalHotel)) {
+            Taro.showToast({ title: '驳回后需修改内容才能提交', icon: 'none' });
+            return;
+          }
+          await hotelService.updateHotel(hotelId, {
+            ...finalData,
+            status: HotelStatus.PENDING,
+            rejectionReason: undefined,
+          });
+          Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
+        }
       } else {
-        await hotelService.createHotel({ ...finalData, status: HotelStatus.PENDING });
+        await hotelService.createHotel({
+          ...finalData,
+          status: HotelStatus.PENDING,
+          uploadedBy: user?.username || 'admin',
+        });
         Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
       }
       setTimeout(() => Taro.navigateBack(), 1000);
@@ -102,13 +176,20 @@ const HotelManage = () => {
       [HotelStatus.OFFLINE]: { text: '已下线', type: 'default' },
     };
     const config = statusMap[currentStatus];
-    return <Tag type={config.type as any} style={{ marginLeft: '10px' }}>{config.text}</Tag>;
+    return (
+      <View style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Tag type={config.type as any}>{config.text}</Tag>
+        {currentStatus === HotelStatus.REJECTED && originalHotel?.rejectionReason ? (
+          <Text style={{ color: '#d73a49', fontSize: '12px' }}>原因：{originalHotel.rejectionReason}</Text>
+        ) : null}
+      </View>
+    );
   };
 
   return (
     <View className='admin-manage-container'>
       <View className='admin-manage-header'>
-        <Text className='title-main'>{isEdit ? '编辑酒店信息' : '新商户入驻登记'}</Text>
+        <Text className='title-main'>{isEdit ? '编辑酒店信息' : '添加酒店'}</Text>
         {renderStatus()}
       </View>
 
@@ -120,7 +201,7 @@ const HotelManage = () => {
           footer={
             <View className='admin-manage-footer'>
               <Button className='c-btn' onClick={() => Taro.navigateBack()}>取消</Button>
-              <Button className='s-btn' type='primary' nativeType='submit'>确认提交</Button>
+              <Button className='s-btn' type='primary' onClick={() => form.submit()}>确认提交</Button>
             </View>
           }
         >
@@ -177,8 +258,18 @@ const HotelManage = () => {
                 </View>
                 <Row gutter={10}>
                   <Col span={8}><Input value={room.name} placeholder='名称' onChange={v => updateRoom(room.id, 'name', v)} /></Col>
-                  <Col span={8}><Input type='number' value={String(room.price)} placeholder='价格' onChange={v => updateRoom(room.id, 'price', v)} /></Col>
-                  <Col span={8}><Input value={room.size} placeholder='面积' onChange={v => updateRoom(room.id, 'size', v)} /></Col>
+                  <Col span={8}>
+                    <View className='unit-input'>
+                      <Input type='number' value={String(room.price)} placeholder='价格' onChange={v => updateRoom(room.id, 'price', v)} />
+                      <Text className='unit-text'>元</Text>
+                    </View>
+                  </Col>
+                  <Col span={8}>
+                    <View className='unit-input'>
+                      <Input value={room.size} placeholder='面积' onChange={v => updateRoom(room.id, 'size', v)} />
+                      <Text className='unit-text'>㎡</Text>
+                    </View>
+                  </Col>
                 </Row>
               </View>
             ))}
@@ -188,6 +279,9 @@ const HotelManage = () => {
             <View className='manage-card-title'>其他资料</View>
             <Form.Item label='开业日期' name='openingTime' rules={[{ required: true, message: '必填' }]}>
               <Input placeholder='如 2023-01' />
+            </Form.Item>
+            <Form.Item label='周边简介' name='nearbyIntro'>
+              <TextArea maxLength={200} placeholder='周边交通、配套、地标等（不超过200字）' />
             </Form.Item>
           </View>
         </Form>
