@@ -7,7 +7,6 @@ import './app.scss'
 function App({ children }: PropsWithChildren<any>) {
   const { isLogin, isPC, setDevice, user } = useStore()
   const [initialized, setInitialized] = useState(false)
-  const [isLoginPage, setIsLoginPage] = useState(false)
 
   // 1. 启动时检测设备类型并自动跳转
   useEffect(() => {
@@ -48,16 +47,7 @@ function App({ children }: PropsWithChildren<any>) {
     setInitialized(true)
   }, [initialized, isLogin, setDevice])
 
-  // 2. 检测当前是否是登录页
-  useEffect(() => {
-    const pages = Taro.getCurrentPages()
-    if (pages.length > 0) {
-      const currentPage = pages[pages.length - 1]
-      setIsLoginPage(currentPage?.route?.includes('login') || false)
-    }
-  })
-
-  // 3. PC端已登录：使用 Layout 包裹管理端页面
+  // 2. PC端已登录：使用 Layout 包裹管理端页面
   if (isPC && isLogin && user) {
     // 管理端页面需要 Layout 包裹
     const pages = Taro.getCurrentPages()
@@ -71,7 +61,7 @@ function App({ children }: PropsWithChildren<any>) {
     }
   }
 
-  // 4. 登录页和其他页面直接显示
+  // 3. 登录页和其他页面直接显示
   return <>{children}</>
 }
 
