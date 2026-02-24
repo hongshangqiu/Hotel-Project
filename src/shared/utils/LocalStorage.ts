@@ -158,6 +158,7 @@ export const STORAGE_KEYS = {
   HOTEL_MAP: 'hotel_map',
   EDIT_HOTEL_ID: 'edit_hotel_id',
   VIEW_HOTEL_ID: 'view_hotel_id',
+  USER_VIEW_HOTEL_ID: 'user_view_hotel_id',
   SEARCH_PARAMS: 'search_params',
   USER: 'user',
   FAVORITES: 'favorites',

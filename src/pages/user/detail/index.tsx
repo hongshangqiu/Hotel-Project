@@ -3,6 +3,7 @@ import Taro from '@tarojs/taro';
 import { useEffect, useMemo, useState } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel } from '../../../shared/types/hotel';
+import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import './index.scss';
 
 type NavKey = 'room' | 'detail';
@@ -16,14 +17,13 @@ const HotelDetail = () => {
 
   const hotelId = useMemo(() => {
     const inst = Taro.getCurrentInstance();
-    return inst?.router?.params?.id || '';
+    return inst?.router?.params?.id || LocalStorage.get<string>(STORAGE_KEYS.USER_VIEW_HOTEL_ID) || '';
   }, []);
 
 
   const openMap = (address) => {
-    window.open(
-      `https://apis.map.qq.com/uri/v1/search?keyword=${encodeURIComponent(address)}&referer=myapp`
-    )
+    const url = `https://apis.map.qq.com/uri/v1/search?keyword=${encodeURIComponent(address)}&referer=myapp`;
+    Taro.navigateTo({ url: `/pages/user/webview/index?url=${encodeURIComponent(url)}` });
   }
 
 
@@ -250,7 +250,7 @@ const HotelDetail = () => {
                       <View
                         className='room-book-btn'
                         onClick={() =>
-                          window.location.hash = `/pages/user/booking/index?id=${hotelId}&roomId=${room.id}`
+                          Taro.navigateTo({ url: `/pages/user/booking/index?id=${hotelId}&roomId=${room.id}` })
                         }
                       >
                         <Text className='room-book-text'>预定</Text>
