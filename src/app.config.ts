@@ -12,6 +12,7 @@ export default defineAppConfig({
     'pages/user/index/index',
     'pages/user/list/index',
     'pages/user/detail/index',
+    'pages/user/webview/index',
     'pages/user/booking/index'
   ],
   window: {

@@ -3,6 +3,7 @@ import Taro, { useReachBottom } from '@tarojs/taro';
 import { useState, useEffect } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel } from '../../../shared/types/hotel';
+import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import './index.scss';
 
 const HotelList = () => {
@@ -212,7 +213,8 @@ const HotelList = () => {
         {list.map((hotel) => (
           <View key={hotel.id} className='hotel-card'
             onClick={() => {
-              window.location.hash = `/pages/user/detail/index?id=${hotel.id}`
+              LocalStorage.set(STORAGE_KEYS.USER_VIEW_HOTEL_ID, hotel.id)
+              Taro.navigateTo({ url: '/pages/user/detail/index' })
             }}
           >
             <Image className='cover' src={hotel.imageUrl} />
