@@ -134,6 +134,16 @@ const AuditDetail = () => {
             <Text>起价：¥{hotel.price}</Text>
             <Text>开业：{hotel.openingTime}</Text>
           </View>
+          {hotel.tags && hotel.tags.length > 0 ? (
+            <View className='hotel-tags'>
+              {hotel.tags.map(tag => (
+                <Text key={tag} className='tag-chip'>{tag}</Text>
+              ))}
+            </View>
+          ) : null}
+          {hotel.nearbyIntro ? (
+            <Text className='nearby-intro'>周边简介：{hotel.nearbyIntro}</Text>
+          ) : null}
           <Text className='hotel-upload'>上传商户：{hotel.uploadedBy}</Text>
           {hotel.rejectionReason && hotel.status === HotelStatus.REJECTED ? (
             <Text className='reject-reason'>驳回原因：{hotel.rejectionReason}</Text>

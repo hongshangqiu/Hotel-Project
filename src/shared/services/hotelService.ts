@@ -19,6 +19,15 @@ const ensureDevSeed = () => {
   }
 };
 
+const TAG_POOL = [
+  ['亲子', '免费停车场'],
+  ['豪华', '含早餐'],
+  ['近地铁', '商务'],
+  ['江景', '健身房'],
+  ['亲子', '泳池'],
+  ['精品', '免费停车场'],
+];
+
 // 初始假数据
 const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   id: `${index + 1}`,
@@ -44,6 +53,7 @@ const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   ],
   status: index === 0 ? HotelStatus.PENDING : HotelStatus.PUBLISHED, // 模拟一个审核中的
   imageUrl: `https://picsum.photos/200/200?random=${index}`,
+  tags: TAG_POOL[index % TAG_POOL.length],
 }));
 
 const getLocalData = (): Record<string, IHotel> => {
@@ -61,6 +71,10 @@ const getLocalData = (): Record<string, IHotel> => {
       hotel.uploadedBy = 'admin';
       patched = true;
     }
+    if (!hotel.tags) {
+      hotel.tags = [];
+      patched = true;
+    }
   });
   if (patched) {
     LocalStorage.set(STORAGE_KEYS.HOTEL_MAP, data);
@@ -75,7 +89,9 @@ export const hotelService = {
     pageSize: number = 5,
     sortType?: 'priceAsc' | 'priceDesc' | 'star',
     stars?: number[],
-    priceRange?: [number, number]
+    priceRange?: [number, number],
+    keyword?: string,
+    tags?: string[]
   ): Promise<{ list: IHotel[], total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -90,6 +106,16 @@ export const hotelService = {
         // ⭐ 筛选
         let filteredHotels = [...publishedHotels];
 
+        // 关键字筛选
+        if (keyword) {
+          const kw = keyword.toLowerCase();
+          filteredHotels = filteredHotels.filter(h =>
+            h.nameCn.toLowerCase().includes(kw) ||
+            h.nameEn.toLowerCase().includes(kw) ||
+            h.address.toLowerCase().includes(kw)
+          );
+        }
+
         // 星级筛选
         if (stars && stars.length > 0) {
           filteredHotels = filteredHotels.filter(h =>
@@ -101,6 +127,12 @@ export const hotelService = {
         if (priceRange) {
           filteredHotels = filteredHotels.filter(h =>
             h.price >= priceRange[0] && h.price <= priceRange[1]
+          );
+        }
+
+        if (tags && tags.length > 0) {
+          filteredHotels = filteredHotels.filter(h =>
+            tags.some(tag => (h.tags || []).includes(tag))
           );
         }
 

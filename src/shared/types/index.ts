@@ -35,6 +35,7 @@ export interface IHotel {
   imageUrl: string;
   rejectionReason?: string;
   nearbyIntro?: string;
+  tags?: string[];
   description?: string; // 从 index.ts 补充
   rating?: number; // 从 index.ts 补充
   images?: string[]; // 从 index.ts 补充
@@ -62,6 +63,9 @@ export interface IHotelSearchParams {
   startDate: string;
   endDate: string;
   keyword?: string;
+  stars?: number[];
+  priceRange?: [number, number];
+  tags?: string[];
 }
 
 // 通用分页响应
