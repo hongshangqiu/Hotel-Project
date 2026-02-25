@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel } from '../../../shared/types/hotel';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import { useHotelStore } from '../../../shared/store/useHotelStore';
 import './index.scss';
 
 const HotelList = () => {
@@ -12,6 +13,7 @@ const HotelList = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const { searchParams } = useHotelStore();
   // 排序状态
   const [showSort, setShowSort] = useState(false)
   const [sortType, setSortType] = useState<'priceAsc' | 'priceDesc' | 'star'>('priceAsc')
@@ -37,7 +39,15 @@ const HotelList = () => {
     setLoading(true);
 
     try {
-      const res = await hotelService.getHotelsByPage(currentPage, 5, sortType, selectedStars, priceRange)
+      const res = await hotelService.getHotelsByPage(
+        currentPage,
+        5,
+        sortType,
+        selectedStars,
+        priceRange,
+        searchParams.keyword,
+        searchParams.tags
+      )
       const newList = res?.list ?? []
       const totalCount = res?.total ?? 0
 
@@ -60,13 +70,18 @@ const HotelList = () => {
     loadData(1)
   }, [])
 
+  useEffect(() => {
+    setSelectedStars(searchParams.stars || [])
+    setPriceRange(searchParams.priceRange)
+  }, [searchParams.stars, searchParams.priceRange])
+
 
   // 条件变化 → 重置分页
   useEffect(() => {
     setPage(1)
     setHasMore(true)
     setList([])
-  }, [sortType, selectedStars, priceRange])
+  }, [sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags])
 
 
   // 页码变化 → 请求
@@ -210,8 +225,8 @@ const HotelList = () => {
             <Text className='empty-text'>没有符合条件的酒店</Text>
           </View>
         )}
-        {list.map((hotel) => (
-          <View key={hotel.id} className='hotel-card'
+        {list.map((hotel, index) => (
+          <View key={`${hotel.id}-${index}`} className='hotel-card'
             onClick={() => {
               LocalStorage.set(STORAGE_KEYS.USER_VIEW_HOTEL_ID, hotel.id)
               Taro.navigateTo({ url: '/pages/user/detail/index' })

@@ -16,7 +16,10 @@ const getInitialSearchParams = (): IHotelSearchParams => {
     city: '上海',
     startDate: '2026-02-04',
     endDate: '2026-02-05',
-    keyword: ''
+    keyword: '',
+    stars: [],
+    priceRange: undefined,
+    tags: []
   };
 };
 
@@ -55,7 +58,10 @@ export const useHotelStore = create<HotelState>((set, get) => ({
       city: '上海',
       startDate: '2026-02-04',
       endDate: '2026-02-05',
-      keyword: ''
+      keyword: '',
+      stars: [],
+      priceRange: undefined,
+      tags: []
     };
     LocalStorage.set(STORAGE_KEYS.SEARCH_PARAMS, defaultParams);
     set({ searchParams: defaultParams });
