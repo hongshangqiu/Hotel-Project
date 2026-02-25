@@ -163,6 +163,7 @@ export const STORAGE_KEYS = {
   USER: 'user',
   FAVORITES: 'favorites',
   HISTORY: 'search_history',
+  USER_LIST: 'user_list',
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
