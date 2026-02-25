@@ -46,23 +46,30 @@ const AuditPage = () => {
   const [offlineOtherReason, setOfflineOtherReason] = useState('');
 
   // 加载各列表数据
-  const loadData = async () => {
+  // 按 Tab 按需加载：0=待审核 1=已通过 2=已拒绝
+  const loadData = async (tab: number) => {
     setLoading(true);
     try {
-      // 待审核列表
-      const pendingRes = await hotelService.getPendingAuditList(1, 100);
-      setPendingList(pendingRes.list);
-      setTotalPending(pendingRes.total);
+      if (tab === 0) {
+        const pendingRes = await hotelService.getPendingAuditList(1, 100);
+        setPendingList(pendingRes.list);
+        setTotalPending(pendingRes.total);
+        return;
+      }
 
-      // 已通过列表
-      const publishedRes = await hotelService.getPublishedList(1, 100);
-      setPublishedList(publishedRes.list);
-      setTotalPublished(publishedRes.total);
+      if (tab === 1) {
+        const publishedRes = await hotelService.getPublishedList(1, 100);
+        setPublishedList(publishedRes.list);
+        setTotalPublished(publishedRes.total);
+        return;
+      }
 
-      // 已拒绝列表
-      const rejectedRes = await hotelService.getRejectedList(1, 100);
-      setRejectedList(rejectedRes.list);
-      setTotalRejected(rejectedRes.total);
+      if (tab === 2) {
+        const rejectedRes = await hotelService.getRejectedList(1, 100);
+        setRejectedList(rejectedRes.list);
+        setTotalRejected(rejectedRes.total);
+        return;
+      }
     } catch (err) {
       Taro.showToast({ title: '加载失败', icon: 'none' });
     } finally {
@@ -71,19 +78,18 @@ const AuditPage = () => {
   };
 
   useEffect(() => {
-    // 检查用户是否是管理员
-    if (user && user.role !== UserRole.ADMIN) {
+    if (!user) return;
+
+    // 权限校验
+    if (user.role !== UserRole.ADMIN) {
       Taro.showToast({ title: '您无权限访问此页面', icon: 'none' });
       Taro.redirectTo({ url: '/pages/admin/manage/index' });
       return;
     }
-    loadData();
-  }, []);
 
-  // Tab 切换时重新加载数据
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    // 按当前 tab 加载数据
+    loadData(activeTab);
+  }, [user, activeTab]);
 
   // 审核通过
   const handleApprove = async (hotel: IHotel) => {
@@ -93,7 +99,7 @@ const AuditPage = () => {
       Taro.hideLoading();
       if (result) {
         Taro.showToast({ title: '审核通过', icon: 'success' });
-        loadData();
+        loadData(activeTab);
       }
     } catch (err) {
       Taro.hideLoading();
@@ -127,7 +133,7 @@ const AuditPage = () => {
       setRejectDialogVisible(false);
       if (result) {
         Taro.showToast({ title: '已驳回', icon: 'success' });
-        loadData();
+        loadData(activeTab);
       }
     } catch (err) {
       Taro.hideLoading();
@@ -161,7 +167,7 @@ const AuditPage = () => {
       setOfflineDialogVisible(false);
       if (result) {
         Taro.showToast({ title: '已下线', icon: 'success' });
-        loadData();
+        loadData(activeTab);
       }
     } catch (err) {
       Taro.hideLoading();
@@ -172,7 +178,7 @@ const AuditPage = () => {
   // 搜索已通过列表
   const handleSearch = async () => {
     if (!searchKeyword.trim()) {
-      loadData();
+      loadData(activeTab);
       return;
     }
 
