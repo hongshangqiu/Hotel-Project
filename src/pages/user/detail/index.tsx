@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel } from '../../../shared/types/hotel';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import { useHotelStore } from '../../../shared/store/useHotelStore';
+import Calendar from '../../../components/Calendar/index';
 import './index.scss';
 
 type NavKey = 'room' | 'detail';
@@ -19,6 +21,16 @@ const HotelDetail = () => {
     const inst = Taro.getCurrentInstance();
     return inst?.router?.params?.id || LocalStorage.get<string>(STORAGE_KEYS.USER_VIEW_HOTEL_ID) || '';
   }, []);
+
+  const { searchParams, setCalendarVisible } = useHotelStore();
+
+  const nightCount = useMemo(() => {
+    const { startDate, endDate } = searchParams
+    if (!startDate || !endDate) return 0
+    const s = new Date(startDate).getTime()
+    const e = new Date(endDate).getTime()
+    return Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)))
+  }, [searchParams.startDate, searchParams.endDate])
 
 
   const openMap = (address) => {
@@ -190,6 +202,33 @@ const HotelDetail = () => {
 
         </View>
 
+        <View className='date-select-bar'>
+          {/* 入住 */}
+          <View
+            className='date-item'
+            onClick={() => setCalendarVisible(true, 'start')}
+          >
+            <Text className='date-label'>入住</Text>
+            <Text className='date-value'>{searchParams.startDate || '请选择'}</Text>
+          </View>
+
+          {/* 中间：几晚 */}
+          <View className='date-divider'>
+            <Text className='night-count'>
+              {nightCount > 0 ? `${nightCount}晚` : '—'}
+            </Text>
+          </View>
+
+          {/* 离店 */}
+          <View
+            className='date-item'
+            onClick={() => setCalendarVisible(true, 'end')}
+          >
+            <Text className='date-label'>离店</Text>
+            <Text className='date-value'>{searchParams.endDate || '请选择'}</Text>
+          </View>
+        </View>
+
         {/* ===== 详情 Tab ===== */}
         {activeNav === 'detail' && (
           <View className='detail-section'>
@@ -280,6 +319,8 @@ const HotelDetail = () => {
 
       <View className='back-btn' onClick={handleBack}>返回</View>
 
+      {/* 日历弹窗组件 */}
+      <Calendar />
     </View>
   );
 };
