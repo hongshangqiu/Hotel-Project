@@ -1,6 +1,6 @@
 import { View, Text, Image } from '@tarojs/components';
-import Taro, { useDidShow } from '@tarojs/taro';
-import { useState } from 'react';
+import Taro, { useDidShow, useShow } from '@tarojs/taro';
+import { useState, useRef } from 'react';
 import { Button, Tag, Empty } from '@nutui/nutui-react-taro';
 import { useStore } from '@/shared/store';
 import { hotelService } from '@/shared/services/hotelService';
@@ -11,10 +11,22 @@ import './index.scss';
 const MerchantHome = () => {
   const { user, logout } = useStore();
   const [list, setList] = useState<IHotel[]>([]);
+  const isFirstLoad = useRef(true);
 
+  // 每次页面显示时都刷新数据（包括从编辑页返回时）
   useDidShow(() => {
-    hotelService.getMerchantHotels(user?.username).then(setList);
+    loadHotels();
   });
+
+  const loadHotels = async () => {
+    try {
+      const data = await hotelService.getMerchantHotels(user?.username);
+      setList(data);
+      isFirstLoad.current = false;
+    } catch (error) {
+      console.error('加载酒店列表失败:', error);
+    }
+  };
 
   const getStatusInfo = (status: HotelStatus) => {
     const map = {

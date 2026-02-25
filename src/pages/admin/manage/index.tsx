@@ -159,7 +159,11 @@ const HotelManage = () => {
         });
         Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
       }
-      setTimeout(() => Taro.navigateBack(), 1000);
+      setTimeout(() => {
+        // 保存成功后清除编辑ID，让返回时重新加载数据
+        LocalStorage.remove(STORAGE_KEYS.EDIT_HOTEL_ID);
+        Taro.navigateBack();
+      }, 1500);
     } catch (e) {
       Taro.showToast({ title: '操作失败', icon: 'none' });
     } finally {

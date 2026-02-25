@@ -1,4 +1,4 @@
-.login-container {
+.register-container {
   min-height: 100vh;
   background: linear-gradient(180deg, #f6f4ef 0%, #f3f6fb 40%, #eef2f7 100%);
   display: flex;
@@ -97,8 +97,62 @@
     }
   }
 
-  // 登录按钮
-  .login-btn {
+  // 角色选择
+  .role-section {
+    margin-top: 24px;
+  }
+
+  .role-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2b2f36;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .role-selector {
+    display: flex;
+    gap: 12px;
+
+    .role-option {
+      flex: 1;
+      background: #f8f7f5;
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+      border: 1rpx solid #e5e4e1;
+      transition: all 0.2s ease;
+
+      .role-text {
+        font-size: 15px;
+        font-weight: 600;
+        color: #5b6068;
+        display: block;
+      }
+
+      .role-desc {
+        font-size: 12px;
+        color: #8b8f97;
+        margin-top: 4px;
+      }
+
+      &.active {
+        border-color: #e0672c;
+        background: #fff8f4;
+
+        .role-text {
+          color: #e0672c;
+        }
+
+        .role-desc {
+          color: #e0672c;
+        }
+      }
+    }
+  }
+
+  // 注册按钮
+  .register-btn {
     height: 50px;
     font-size: 16px;
     font-weight: 600;
@@ -114,8 +168,8 @@
     }
   }
 
-  // 注册链接
-  .register-link {
+  // 登录链接
+  .login-link {
     text-align: center;
     padding: 20px 0;
 
