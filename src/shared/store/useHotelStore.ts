@@ -32,6 +32,10 @@ const getDefaultSearchParams = (): IHotelSearchParams => {
     startDate: formatDate(start),          // 入住日期：YYYY-MM-DD
     endDate: formatDate(end),              // 退房日期：YYYY-MM-DD
     keyword: '',                           // 默认关键字为空
+    // 融合尹乐熠分支新增的筛选字段
+    stars: [],
+    priceRange: undefined,
+    tags: []
   };
 };
 
@@ -77,6 +81,7 @@ export const useHotelStore = create<HotelState>((set) => ({
     }),
 
   resetSearchParams: () => {
+    // 使用融合后的动态默认参数
     const defaultParams = getDefaultSearchParams();
     LocalStorage.set(STORAGE_KEYS.SEARCH_PARAMS, defaultParams);
     set({ searchParams: defaultParams });

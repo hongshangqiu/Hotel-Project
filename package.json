@@ -57,6 +57,7 @@
     "@tarojs/shared": "3.6.29",
     "@tarojs/taro": "3.6.29",
     "axios": "^1.13.4",
+    "china-area-data": "^5.0.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "zustand": "^5.0.11"

@@ -17,9 +17,24 @@ const HotelManage = () => {
   const [currentStatus, setCurrentStatus] = useState<HotelStatus | null>(null);
   const { user } = useStore();
   const [originalHotel, setOriginalHotel] = useState<IHotel | null>(null);
+  const [tagOptions, setTagOptions] = useState<string[]>([
+    '亲子',
+    '豪华',
+    '免费停车场',
+    '近地铁',
+    '商务',
+    '江景',
+    '健身房',
+    '泳池',
+    '含早餐',
+    '精品',
+  ]);
+  const [customTag, setCustomTag] = useState('');
 
   // 实时监测图片值
   const imageUrlWatch = Form.useWatch('imageUrl', form);
+  const watchedTags = Form.useWatch('tags', form);
+  const selectedTags = Array.isArray(watchedTags) ? watchedTags : [];
 
   useEffect(() => {
     if (hotelId) {
@@ -40,6 +55,9 @@ const HotelManage = () => {
         })));
         setCurrentStatus(data.status);
         setOriginalHotel(data);
+        if (data.tags && data.tags.length > 0) {
+          setTagOptions(prev => Array.from(new Set([...prev, ...data.tags || []])));
+        }
       }
     } finally {
       Taro.hideLoading();
@@ -66,6 +84,7 @@ const HotelManage = () => {
       imageUrl: original.imageUrl || '',
       openingTime: original.openingTime || '',
       nearbyIntro: original.nearbyIntro || '',
+      tags: original.tags || [],
       rooms: normalizeRooms(original.rooms || []),
     };
     const next = {
@@ -75,6 +94,7 @@ const HotelManage = () => {
       imageUrl: updates.imageUrl || '',
       openingTime: updates.openingTime || '',
       nearbyIntro: updates.nearbyIntro || '',
+      tags: updates.tags || [],
       rooms: normalizeRooms(updates.rooms || []),
     };
     return JSON.stringify(current) !== JSON.stringify(next);
@@ -169,6 +189,35 @@ const HotelManage = () => {
 
   const handleRemoveCover = () => {
     form.setFieldsValue({ imageUrl: '' });
+  };
+
+  const toggleTag = (tag: string) => {
+    const raw = form.getFieldValue('tags');
+    const current = Array.isArray(raw) ? raw : [];
+    const next = current.includes(tag)
+      ? current.filter(t => t !== tag)
+      : [...current, tag];
+    form.setFieldsValue({ tags: next });
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    const raw = form.getFieldValue('tags');
+    const current = Array.isArray(raw) ? raw : [];
+    form.setFieldsValue({ tags: current.filter(t => t !== tag) });
+  };
+
+  const handleAddCustomTag = () => {
+    const value = customTag.trim();
+    if (!value) return;
+    if (!tagOptions.includes(value)) {
+      setTagOptions(prev => [...prev, value]);
+    }
+    const raw = form.getFieldValue('tags');
+    const current = Array.isArray(raw) ? raw : [];
+    if (!current.includes(value)) {
+      form.setFieldsValue({ tags: [...current, value] });
+    }
+    setCustomTag('');
   };
 
   const renderStatus = () => {
@@ -284,6 +333,42 @@ const HotelManage = () => {
             <Form.Item label='开业日期' name='openingTime' rules={[{ required: true, message: '必填' }]}>
               <Input placeholder='如 2023-01' />
             </Form.Item>
+            <Form.Item label='标签管理' name='tags'>
+              <View className='tag-manager'>
+                <View className='tag-selected'>
+                  {(selectedTags as string[]).length > 0 ? (
+                    (selectedTags as string[]).map(tag => (
+                      <View key={tag} className='tag-chip'>
+                        <Text>{tag}</Text>
+                        <Text className='tag-remove' onClick={() => handleRemoveTag(tag)}>×</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text className='tag-empty'>暂无已选标签</Text>
+                  )}
+                </View>
+                <View className='tag-quick'>
+                  {tagOptions.map(tag => (
+                    <Text
+                      key={tag}
+                      className={`tag-quick-item ${(selectedTags as string[]).includes(tag) ? 'active' : ''}`}
+                      onClick={() => toggleTag(tag)}
+                    >
+                      + {tag}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            </Form.Item>
+            <View className='tag-input-row'>
+              <Text className='tag-input-label'>自定义标签</Text>
+              <Input
+                value={customTag}
+                placeholder='输入后点击添加'
+                onChange={(val) => setCustomTag(val)}
+              />
+              <Button size='small' onClick={handleAddCustomTag}>添加</Button>
+            </View>
             <Form.Item label='周边简介' name='nearbyIntro'>
               <TextArea maxLength={200} placeholder='周边交通、配套、地标等（不超过200字）' />
             </Form.Item>
