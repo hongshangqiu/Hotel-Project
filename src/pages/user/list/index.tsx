@@ -1,9 +1,12 @@
-import { View, Text, Image, ScrollView } from '@tarojs/components';
+import { View, Text, Image, Input, Picker } from '@tarojs/components';
 import Taro, { useReachBottom } from '@tarojs/taro';
 import { useState, useEffect } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
 import { IHotel } from '../../../shared/types/hotel';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import { PROVINCES, CITIES_BY_PROVINCE } from '../../../shared/constants/regions'
+import { useHotelStore } from '../../../shared/store/useHotelStore'
+import Calendar from '../../../components/Calendar/index'
 import './index.scss';
 
 const HotelList = () => {
@@ -30,6 +33,67 @@ const HotelList = () => {
     { label: '¥500–800', value: [500, 800] },
     { label: '¥800+', value: [800, 9999] }
   ]
+
+  const [province, setProvince] = useState('上海市')
+  const [city, setCity] = useState('上海市')
+
+  // Picker multiSelector 需要的 range/value
+  const [cityRange, setCityRange] = useState<string[][]>([
+    PROVINCES,
+    CITIES_BY_PROVINCE['上海市'] || ['上海市'],
+  ])
+
+  const [cityIndex, setCityIndex] = useState<[number, number]>([
+    PROVINCES.indexOf('上海市') >= 0 ? PROVINCES.indexOf('上海市') : 0,
+    0,
+  ])
+  const { searchParams, setCalendarVisible } = useHotelStore()
+
+  // 搜索栏（先不做功能）
+  const [keyword, setKeyword] = useState('')
+
+  const onCityColumnChange = (e) => {
+    const { column, value } = e.detail
+
+    // 改省：更新城市列表，并重置市索引为0
+    if (column === 0) {
+      const nextProvince = PROVINCES[value]
+      const nextCities = CITIES_BY_PROVINCE[nextProvince] || [nextProvince]
+
+      setCityRange([PROVINCES, nextCities])
+      setCityIndex([value, 0])
+
+      // 同步展示文本（你也可以等 onChange 再设）
+      setProvince(nextProvince)
+      setCity(nextCities[0])
+    }
+
+    // 改市：只更新索引
+    if (column === 1) {
+      setCityIndex(prev => [prev[0], value])
+    }
+  }
+
+  const onCityChange = (e) => {
+    const [pIdx, cIdx] = e.detail.value as [number, number]
+    const nextProvince = PROVINCES[pIdx]
+    const nextCities = CITIES_BY_PROVINCE[nextProvince] || [nextProvince]
+    const nextCity = nextCities[cIdx] || nextCities[0]
+
+    setProvince(nextProvince)
+    setCity(nextCity)
+    setCityIndex([pIdx, cIdx])
+  }
+
+  const calcNights = () => {
+    const { startDate, endDate } = searchParams
+    if (!startDate || !endDate) return 0
+    const s = new Date(startDate).getTime()
+    const e = new Date(endDate).getTime()
+    return Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)))
+  }
+
+  const nights = calcNights()
 
   // 加载数据的方法
   const loadData = async (currentPage: number) => {
@@ -81,9 +145,47 @@ const HotelList = () => {
 
   return (
     <View className='list-page'>
+      {/* 顶部搜索区 */}
+      <View className='search-bar'>
+
+        {/* 搜索栏：先只做UI不做功能 */}
+        <View className='keyword-row'>
+          <View className='keyword-input'>
+            <Input
+              className='input'
+              value={keyword}
+              placeholder='搜索酒店名/地址/关键词'
+              onInput={(e) => setKeyword(e.detail.value)}
+            />
+          </View>
+
+          <View className='keyword-btn'>搜索</View>
+        </View>
+
+      </View>
       <View className='header'>
         <Text className='title'>共发现 {total} 家酒店</Text>
       </View>
+
+      {/* 日期区域 */}
+      <View className='date-row'>
+        <View className='date-item' onClick={() => setCalendarVisible(true, 'start')}>
+          <Text className='date-label'>入住</Text>
+          <Text className='date-val'>{searchParams.startDate || '请选择'}</Text>
+        </View>
+
+        <View className='date-item' onClick={() => setCalendarVisible(true, 'end')}>
+          <Text className='date-label'>离店</Text>
+          <Text className='date-val'>{searchParams.endDate || '请选择'}</Text>
+        </View>
+
+        {!!nights && (
+          <View className='nights-badge'>
+            <Text>{nights}晚</Text>
+          </View>
+        )}
+      </View>
+
       {/* 排序筛选栏 */}
       <View className='toolbar'>
 
@@ -115,7 +217,19 @@ const HotelList = () => {
 
           </View>
         )}
-
+        {/* 城市选择（省/市） */}
+        <Picker
+          mode='multiSelector'
+          range={cityRange}
+          value={cityIndex}
+          onColumnChange={onCityColumnChange}
+          onChange={onCityChange}
+        >
+          <View className='toolbar-item'>
+            <Text className='city-text'>{city}</Text>
+            <Text className='arrow'>▼</Text>
+          </View>
+        </Picker>
         <View
           className='toolbar-item'
           onClick={() => setShowFilter(true)}
@@ -252,6 +366,9 @@ const HotelList = () => {
       >
         返回
       </View>
+
+      {/* 日历弹窗组件 */}
+      <Calendar />
     </View>
 
   );
