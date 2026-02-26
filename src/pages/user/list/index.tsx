@@ -15,7 +15,7 @@ const HotelList = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const { searchParams } = useHotelStore();
+  
   // 排序状态
   const [showSort, setShowSort] = useState(false)
   const [sortType, setSortType] = useState<'priceAsc' | 'priceDesc' | 'star'>('priceAsc')
