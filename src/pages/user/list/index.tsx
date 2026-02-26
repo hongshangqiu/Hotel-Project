@@ -15,7 +15,10 @@ const HotelList = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const { searchParams } = useHotelStore();
+  const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore()
+  const [keyword, setKeyword] = useState(searchParams.keyword || '')
+
+
   // 排序状态
   const [showSort, setShowSort] = useState(false)
   const [sortType, setSortType] = useState<'priceAsc' | 'priceDesc' | 'star'>('priceAsc')
@@ -48,10 +51,6 @@ const HotelList = () => {
     PROVINCES.indexOf('上海市') >= 0 ? PROVINCES.indexOf('上海市') : 0,
     0,
   ])
-  const { searchParams, setCalendarVisible } = useHotelStore()
-
-  // 搜索栏（先不做功能）
-  const [keyword, setKeyword] = useState('')
 
   const onCityColumnChange = (e) => {
     const { column, value } = e.detail
@@ -64,7 +63,7 @@ const HotelList = () => {
       setCityRange([PROVINCES, nextCities])
       setCityIndex([value, 0])
 
-      // 同步展示文本（你也可以等 onChange 再设）
+      // 同步展示文本
       setProvince(nextProvince)
       setCity(nextCities[0])
     }
@@ -119,7 +118,7 @@ const HotelList = () => {
       if (newList.length < 5) {
         setHasMore(false); // 不满5条说明到底了
       }
-      setList(prev => [...prev, ...newList]);
+      setList(prev => (currentPage === 1 ? newList : [...prev, ...newList]))
       setPage(currentPage + 1);
     } catch (err) {
       Taro.showToast({ title: '加载失败', icon: 'none' });
@@ -127,6 +126,12 @@ const HotelList = () => {
       setLoading(false);
     }
   };
+
+  const onSearch = () => {
+    Taro.hideKeyboard?.().catch(() => { })
+
+    setSearchParams({ keyword: keyword.trim() })
+  }
 
   // 初始化加载
   useEffect(() => {
@@ -162,7 +167,7 @@ const HotelList = () => {
       {/* 顶部搜索区 */}
       <View className='search-bar'>
 
-        {/* 搜索栏：先只做UI不做功能 */}
+        {/* 搜索栏 */}
         <View className='keyword-row'>
           <View className='keyword-input'>
             <Input
@@ -170,10 +175,11 @@ const HotelList = () => {
               value={keyword}
               placeholder='搜索酒店名/地址/关键词'
               onInput={(e) => setKeyword(e.detail.value)}
+              confirmType='search'
+              onConfirm={onSearch}
             />
           </View>
-
-          <View className='keyword-btn'>搜索</View>
+          <View className='keyword-btn' onClick={onSearch}>搜索</View>
         </View>
 
       </View>
