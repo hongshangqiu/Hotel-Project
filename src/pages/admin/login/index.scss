@@ -95,6 +95,45 @@
         background: transparent;
       }
     }
+
+    .error-text {
+      display: block;
+      color: #ff4d4f;
+      font-size: 12px;
+      margin-top: 6px;
+      padding-left: 4px;
+    }
+  }
+
+  // 锁定提示
+  .lock-tip {
+    background: #fff2f0;
+    border: 1rpx solid #ffccc7;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    text-align: center;
+
+    .lock-text {
+      color: #ff4d4f;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+
+  // 错误次数提示
+  .error-count-tip {
+    background: #fffbe6;
+    border: 1rpx solid #ffe58f;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    text-align: center;
+
+    .count-text {
+      color: #faad14;
+      font-size: 14px;
+    }
   }
 
   // 登录按钮
