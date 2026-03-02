@@ -94,6 +94,18 @@
         color: #333;
         background: transparent;
       }
+
+      .input-error {
+        border-color: #ff4d4f;
+      }
+    }
+
+    .error-text {
+      display: block;
+      color: #ff4d4f;
+      font-size: 12px;
+      margin-top: 6px;
+      padding-left: 4px;
     }
   }
 
@@ -147,6 +159,11 @@
         .role-desc {
           color: #e0672c;
         }
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
       }
     }
   }

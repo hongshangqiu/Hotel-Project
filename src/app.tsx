@@ -3,16 +3,24 @@ import Taro from '@tarojs/taro'
 import Layout from './components/Layout'
 import { useStore } from './shared/store'
 import { hotelService } from './shared/services/hotelService'
+import { LocalStorage, STORAGE_KEYS } from './shared/utils/LocalStorage'
+import { PRESET_MERCHANTS } from './shared/constants'
 import './app.scss'
 
 function App({ children }: PropsWithChildren<any>) {
   const { isLogin, isPC, setDevice, user } = useStore()
   const [initialized, setInitialized] = useState(false)
 
-  // 0. 启动时确保 Mock 数据已初始化
+  // 0. 启动时确保 Mock 数据已初始化（酒店数据 + 商户数据）
   useEffect(() => {
     // 预加载酒店数据，确保 Mock 数据被初始化到 LocalStorage
     hotelService.getHotelsByPage(1, 1).catch(() => {});
+
+    // 初始化预设商户账号
+    const users = LocalStorage.get<any[]>(STORAGE_KEYS.USER_LIST) || []
+    if (users.length === 0) {
+      LocalStorage.set(STORAGE_KEYS.USER_LIST, PRESET_MERCHANTS)
+    }
   }, []);
 
   // 1. 启动时检测设备类型并自动跳转

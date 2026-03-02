@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { Button, Input } from '@nutui/nutui-react-taro'
 import { useStore } from '@/shared/store'
 import { UserRole } from '@/shared/types'
 import { LocalStorage, STORAGE_KEYS } from '@/shared/utils/LocalStorage'
-import { PRESET_MERCHANTS } from '@/shared/constants'
 import './index.scss'
 
 const Register = () => {
@@ -13,21 +12,70 @@ const Register = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [role, setRole] = useState<UserRole>(UserRole.MERCHANT)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<{ username?: string; password?: string; confirmPassword?: string; inviteCode?: string }>({})
 
-  // 初始化预设商户账号
-  useEffect(() => {
-    const initMerchants = () => {
-      const users = LocalStorage.get<any[]>(STORAGE_KEYS.USER_LIST) || []
-      
-      // 如果没有预设商户，则添加
-      if (users.length === 0) {
-        LocalStorage.set(STORAGE_KEYS.USER_LIST, PRESET_MERCHANTS)
-      }
+  // 推荐码
+  const VALID_INVITE_CODE = '123456'
+
+  // 表单输入验证
+  const validateInput = (): boolean => {
+    const newErrors: { username?: string; password?: string; confirmPassword?: string; inviteCode?: string } = {}
+    let isValid = true
+
+    // 去除首尾空格后的值
+    const trimmedUsername = username.trim()
+    const trimmedPassword = password.trim()
+    const trimmedConfirmPassword = confirmPassword.trim()
+    const trimmedInviteCode = inviteCode.trim()
+
+    // 用户名验证
+    if (!trimmedUsername) {
+      newErrors.username = '请输入用户名'
+      isValid = false
+    } else if (trimmedUsername.length < 3) {
+      newErrors.username = '用户名至少3个字符'
+      isValid = false
+    } else if (/[\s<>'"\\]/.test(trimmedUsername)) {
+      newErrors.username = '用户名不能包含空格或特殊字符'
+      isValid = false
     }
-    initMerchants()
-  }, [])
+
+    // 密码验证
+    if (!trimmedPassword) {
+      newErrors.password = '请输入密码'
+      isValid = false
+    } else if (trimmedPassword.length < 6) {
+      newErrors.password = '密码至少6个字符'
+      isValid = false
+    } else if (/[\s<>'"\\]/.test(trimmedPassword)) {
+      newErrors.password = '密码不能包含空格或特殊字符'
+      isValid = false
+    }
+
+    // 确认密码验证
+    if (!trimmedConfirmPassword) {
+      newErrors.confirmPassword = '请再次输入密码'
+      isValid = false
+    } else if (trimmedPassword !== trimmedConfirmPassword) {
+      newErrors.confirmPassword = '两次密码输入不一致'
+      isValid = false
+    }
+
+    // 推荐码验证
+    if (!trimmedInviteCode) {
+      newErrors.inviteCode = '请输入推荐码'
+      isValid = false
+    } else if (trimmedInviteCode !== VALID_INVITE_CODE) {
+      newErrors.inviteCode = '推荐码错误'
+      isValid = false
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
 
   // 获取已注册用户列表
   const getRegisteredUsers = (): any[] => {
@@ -48,28 +96,26 @@ const Register = () => {
   }
 
   const handleRegister = () => {
-    // 验证输入
-    if (!username || !password || !confirmPassword) {
-      Taro.showToast({ title: '请填写完整信息', icon: 'none' })
+    // 表单验证
+    if (!validateInput()) {
       return
     }
 
-    if (username.length < 3) {
-      Taro.showToast({ title: '用户名至少3个字符', icon: 'none' })
+    // 去除空格
+    const trimmedUsername = username.trim()
+    const trimmedPassword = password.trim()
+    const trimmedInviteCode = inviteCode.trim()
+
+    // 验证推荐码
+    if (trimmedInviteCode !== VALID_INVITE_CODE) {
+      setErrors({ ...errors, inviteCode: '推荐码错误' })
+      Taro.showToast({ title: '推荐码错误', icon: 'none' })
       return
     }
 
-    if (password.length < 6) {
-      Taro.showToast({ title: '密码至少6位', icon: 'none' })
-      return
-    }
-
-    if (password !== confirmPassword) {
-      Taro.showToast({ title: '两次密码输入不一致', icon: 'none' })
-      return
-    }
-
-    if (isUsernameExists(username)) {
+    // 检查用户名是否已存在
+    if (isUsernameExists(trimmedUsername)) {
+      setErrors({ ...errors, username: '用户名已存在' })
       Taro.showToast({ title: '用户名已存在', icon: 'none' })
       return
     }
@@ -80,7 +126,7 @@ const Register = () => {
     setTimeout(() => {
       const user = {
         id: Date.now().toString(),
-        username,
+        username: trimmedUsername,
         role,
         token: `mock-token-${Date.now()}`
       }
@@ -89,7 +135,7 @@ const Register = () => {
       saveUser({
         id: user.id,
         username: user.username,
-        password: password,
+        password: trimmedPassword,
         role: user.role
       })
 
@@ -137,52 +183,84 @@ const Register = () => {
           <View className='form-item'>
             <View className='input-wrapper'>
               <Input
-                className='input'
+                className={`input ${errors.username ? 'input-error' : ''}`}
                 type='text'
                 placeholder='请输入用户名（至少3位）'
                 value={username}
-                onChange={(val) => setUsername(val)}
+                disabled={loading}
+                onChange={(val) => {
+                  setUsername(val)
+                  setErrors(prev => ({ ...prev, username: undefined }))
+                }}
               />
             </View>
+            {errors.username && <Text className='error-text'>{errors.username}</Text>}
           </View>
 
           <View className='form-item'>
             <View className='input-wrapper'>
               <Input
-                className='input'
+                className={`input ${errors.password ? 'input-error' : ''}`}
                 type='password'
                 placeholder='请输入密码（至少6位）'
                 value={password}
-                onChange={(val) => setPassword(val)}
+                disabled={loading}
+                onChange={(val) => {
+                  setPassword(val)
+                  setErrors(prev => ({ ...prev, password: undefined }))
+                }}
               />
             </View>
+            {errors.password && <Text className='error-text'>{errors.password}</Text>}
           </View>
 
           <View className='form-item'>
             <View className='input-wrapper'>
               <Input
-                className='input'
+                className={`input ${errors.confirmPassword ? 'input-error' : ''}`}
                 type='password'
                 placeholder='请再次输入密码'
                 value={confirmPassword}
-                onChange={(val) => setConfirmPassword(val)}
+                disabled={loading}
+                onChange={(val) => {
+                  setConfirmPassword(val)
+                  setErrors(prev => ({ ...prev, confirmPassword: undefined }))
+                }}
               />
             </View>
+            {errors.confirmPassword && <Text className='error-text'>{errors.confirmPassword}</Text>}
+          </View>
+
+          <View className='form-item'>
+            <View className='input-wrapper'>
+              <Input
+                className={`input ${errors.inviteCode ? 'input-error' : ''}`}
+                type='text'
+                placeholder='请输入推荐码'
+                value={inviteCode}
+                disabled={loading}
+                onChange={(val) => {
+                  setInviteCode(val)
+                  setErrors(prev => ({ ...prev, inviteCode: undefined }))
+                }}
+              />
+            </View>
+            {errors.inviteCode && <Text className='error-text'>{errors.inviteCode}</Text>}
           </View>
 
           <View className='form-item role-section'>
             <Text className='role-label'>选择身份</Text>
             <View className='role-selector'>
               <View
-                className={`role-option ${role === UserRole.MERCHANT ? 'active' : ''}`}
-                onClick={() => setRole(UserRole.MERCHANT)}
+                className={`role-option ${role === UserRole.MERCHANT ? 'active' : ''} ${loading ? 'disabled' : ''}`}
+                onClick={() => !loading && setRole(UserRole.MERCHANT)}
               >
                 <Text className='role-text'>商户</Text>
                 <Text className='role-desc'>管理酒店</Text>
               </View>
               <View
-                className={`role-option ${role === UserRole.ADMIN ? 'active' : ''}`}
-                onClick={() => setRole(UserRole.ADMIN)}
+                className={`role-option ${role === UserRole.ADMIN ? 'active' : ''} ${loading ? 'disabled' : ''}`}
+                onClick={() => !loading && setRole(UserRole.ADMIN)}
               >
                 <Text className='role-text'>管理员</Text>
                 <Text className='role-desc'>审核管理</Text>
