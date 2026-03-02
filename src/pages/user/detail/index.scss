@@ -392,6 +392,8 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+    padding-right: 160rpx; // 为预定按钮留出空间
   }
 
   /* 房型名称 */
@@ -420,6 +422,27 @@
     font-size: 24rpx;
     color: #1677ff;
     margin-top: 12rpx;
+  }
+
+  /* 内联预定按钮 - 不需要展开即可点击 */
+  .room-book-btn-inline {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 140rpx;
+    height: 60rpx;
+    background: linear-gradient(135deg, #1677ff, #4096ff);
+    border-radius: 30rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .room-book-text {
+      color: #fff;
+      font-size: 26rpx;
+      font-weight: 500;
+    }
   }
 
   /* 展开区域（核心动画） */

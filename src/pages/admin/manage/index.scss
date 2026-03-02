@@ -203,6 +203,25 @@
     color: #6a737d;
     min-width: 72px;
   }
+
+  // 地址定位样式
+  .address-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .address-input {
+      flex: 1;
+    }
+  }
+
+  .location-error {
+    display: block;
+    color: #ff4d4f;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
   .admin-manage-footer {
     position: fixed; 
     bottom: 0; 
@@ -225,6 +244,67 @@
 
     .c-btn { 
       width: 120px; 
+    }
+  }
+
+  // 价格调整配置样式
+  .price-config-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+
+    .section-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .multiplier-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .unit-text {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+
+    .date-overrides-list {
+      margin-bottom: 12px;
+
+      .override-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: #fff;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        font-size: 13px;
+
+        .remove-btn {
+          color: #ff4d4f;
+          font-size: 12px;
+        }
+      }
+    }
+
+    .add-override-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      .date-input {
+        flex: 1;
+      }
+
+      .multiplier-input-small {
+        width: 80px;
+      }
     }
   }
 }

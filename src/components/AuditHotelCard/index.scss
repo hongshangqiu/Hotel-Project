@@ -1,0 +1,135 @@
+.hotel-card {
+  display: flex;
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 12px 28px rgba(26, 26, 26, 0.08);
+  position: relative;
+  overflow: hidden;
+
+  &.rejected {
+    border-left: 4px solid #ff4d4f;
+  }
+
+  &.offline {
+    border-left: 4px solid #999;
+    opacity: 0.8;
+  }
+
+  .hotel-image {
+    width: 120px;
+    height: 96px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: #f0f0f0;
+  }
+
+  .hotel-info {
+    flex: 1;
+    margin-left: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+
+    .hotel-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hotel-name-en {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hotel-address {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hotel-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 6px;
+
+      .hotel-price {
+        font-size: 14px;
+        color: #ff5500;
+        font-weight: bold;
+      }
+
+      .hotel-star {
+        font-size: 12px;
+        color: #fa8c16;
+      }
+    }
+
+    .hotel-user {
+      font-size: 12px;
+      color: #999;
+      margin-top: 6px;
+    }
+
+    .reject-reason {
+      font-size: 12px;
+      color: #ff4d4f;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #fff2f0;
+      border-radius: 6px;
+    }
+  }
+
+  .hotel-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    margin-left: 12px;
+
+    .action-btn {
+      min-width: 86px;
+      font-size: 12px;
+    }
+
+    .view-btn {
+      background: #f3f4f6 !important;
+      border-color: #e5e7eb !important;
+      color: #4b5563 !important;
+    }
+
+    .approve-btn {
+      background: #52c41a !important;
+      border-color: #52c41a !important;
+    }
+
+    .reject-btn {
+      background: #ff4d4f !important;
+      border-color: #ff4d4f !important;
+    }
+
+    .offline-btn {
+      background: #fa8c16 !important;
+      border-color: #fa8c16 !important;
+    }
+
+    .online-btn {
+      background: #52c41a !important;
+      border-color: #52c41a !important;
+    }
+  }
+}
