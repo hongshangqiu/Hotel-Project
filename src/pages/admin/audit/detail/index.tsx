@@ -5,6 +5,7 @@ import { Button, Dialog } from '@nutui/nutui-react-taro';
 import { hotelService } from '../../../../shared/services/hotelService';
 import { HotelStatus, IHotel } from '../../../../shared/types';
 import { LocalStorage, STORAGE_KEYS } from '../../../../shared/utils/LocalStorage';
+import StarRating from '../../../../components/StarRating';
 import './index.scss';
 
 const REJECT_REASONS = [
@@ -130,7 +131,7 @@ const AuditDetail = () => {
           <Text className='hotel-name-en'>{hotel.nameEn}</Text>
           <Text className='hotel-addr'>{hotel.address}</Text>
           <View className='hotel-meta'>
-            <Text>星级：{hotel.star}</Text>
+            <Text>星级：<StarRating rating={hotel.star} size="small" /></Text>
             <Text>起价：¥{hotel.price}</Text>
             <Text>开业：{hotel.openingTime}</Text>
           </View>

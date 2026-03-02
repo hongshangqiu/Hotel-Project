@@ -3,10 +3,11 @@ import Taro from '@tarojs/taro';
 import { useState, useEffect } from 'react';
 import { Tabs, TabPane, Button, Dialog, Empty } from '@nutui/nutui-react-taro';
 import { hotelService } from '../../../shared/services/hotelService';
-import { IHotel } from '../../../shared/types/hotel';
+import { IHotel, HotelStatus } from '../../../shared/types';
 import { UserRole } from '../../../shared/types';
 import { useStore } from '../../../shared/store';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import StarRating from '../../../components/StarRating';
 import './index.scss';
 
 // 预设的驳回原因选项
@@ -20,15 +21,17 @@ const REJECT_REASONS = [
 ];
 
 const AuditPage = () => {
-  const { user } = useStore()
+  const { user, logout } = useStore()
   const [activeTab, setActiveTab] = useState(0);
   const [pendingList, setPendingList] = useState<IHotel[]>([]);
   const [publishedList, setPublishedList] = useState<IHotel[]>([]);
   const [rejectedList, setRejectedList] = useState<IHotel[]>([]);
+  const [offlineList, setOfflineList] = useState<IHotel[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalPending, setTotalPending] = useState(0);
   const [totalPublished, setTotalPublished] = useState(0);
   const [totalRejected, setTotalRejected] = useState(0);
+  const [totalOffline, setTotalOffline] = useState(0);
 
   // 搜索相关状态
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -46,7 +49,26 @@ const AuditPage = () => {
   const [offlineOtherReason, setOfflineOtherReason] = useState('');
 
   // 加载各列表数据
-  // 按 Tab 按需加载：0=待审核 1=已通过 2=已拒绝
+  // 按 Tab 按需加载：0=待审核 1=已通过 2=已拒绝 3=已下线
+
+  // 新增：初始化时加载所有列表的数量统计
+  const loadAllCounts = async () => {
+    try {
+      const [pendingRes, publishedRes, rejectedRes, offlineRes] = await Promise.all([
+        hotelService.getPendingAuditList(1, 1),
+        hotelService.getPublishedList(1, 1),
+        hotelService.getRejectedList(1, 1),
+        hotelService.getOfflineList(1, 1),
+      ]);
+      setTotalPending(pendingRes.total);
+      setTotalPublished(publishedRes.total);
+      setTotalRejected(rejectedRes.total);
+      setTotalOffline(offlineRes.total);
+    } catch (err) {
+      console.error('加载统计数据失败:', err);
+    }
+  };
+
   const loadData = async (tab: number) => {
     setLoading(true);
     try {
@@ -70,6 +92,13 @@ const AuditPage = () => {
         setTotalRejected(rejectedRes.total);
         return;
       }
+
+      if (tab === 3) {
+        const offlineRes = await hotelService.getOfflineList(1, 100);
+        setOfflineList(offlineRes.list);
+        setTotalOffline(offlineRes.total);
+        return;
+      }
     } catch (err) {
       Taro.showToast({ title: '加载失败', icon: 'none' });
     } finally {
@@ -78,15 +107,21 @@ const AuditPage = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    // 未登录则跳转到登录页
+    if (!user) {
+      Taro.redirectTo({ url: '/pages/admin/login/index' });
+      return;
+    }
 
     // 权限校验
     if (user.role !== UserRole.ADMIN) {
       Taro.showToast({ title: '您无权限访问此页面', icon: 'none' });
-      Taro.redirectTo({ url: '/pages/admin/manage/index' });
+      Taro.redirectTo({ url: '/pages/admin/merchant/index' });
       return;
     }
 
+    // 初始化时加载所有列表的数量统计
+    loadAllCounts();
     // 按当前 tab 加载数据
     loadData(activeTab);
   }, [user, activeTab]);
@@ -175,6 +210,22 @@ const AuditPage = () => {
     }
   };
 
+  // 重新上线
+  const handleOnline = async (hotel: IHotel) => {
+    try {
+      Taro.showLoading({ title: '处理中...' });
+      const result = await hotelService.updateHotel(hotel.id, { status: HotelStatus.PUBLISHED });
+      Taro.hideLoading();
+      if (result) {
+        Taro.showToast({ title: '已重新上线', icon: 'success' });
+        loadData(activeTab);
+      }
+    } catch (err) {
+      Taro.hideLoading();
+      Taro.showToast({ title: '操作失败', icon: 'none' });
+    }
+  };
+
   // 搜索已通过列表
   const handleSearch = async () => {
     if (!searchKeyword.trim()) {
@@ -218,9 +269,9 @@ const AuditPage = () => {
               <Text className="hotel-address">{hotel.address}</Text>
               <View className="hotel-meta">
                 <Text className="hotel-price">¥{hotel.price}/晚</Text>
-                <Text className="hotel-star">{hotel.star}星级</Text>
+                <Text className="hotel-star"><StarRating rating={hotel.star} size="small" /></Text>
               </View>
-              <Text className="hotel-user">上传用户: 商户{hotel.id}</Text>
+              <Text className="hotel-user">上传用户: {hotel.uploadedBy}</Text>
             </View>
             <View className="hotel-actions">
               <Button
@@ -292,9 +343,9 @@ const AuditPage = () => {
                   <Text className="hotel-address">{hotel.address}</Text>
                   <View className="hotel-meta">
                     <Text className="hotel-price">¥{hotel.price}/晚</Text>
-                    <Text className="hotel-star">{hotel.star}星级</Text>
+                    <Text className="hotel-star"><StarRating rating={hotel.star} size="small" /></Text>
                   </View>
-                  <Text className="hotel-user">上传用户: 商户{hotel.id}</Text>
+                  <Text className="hotel-user">上传用户: {hotel.uploadedBy}</Text>
                 </View>
                 <View className="hotel-actions">
                   <Button
@@ -346,9 +397,9 @@ const AuditPage = () => {
               <Text className="hotel-address">{hotel.address}</Text>
               <View className="hotel-meta">
                 <Text className="hotel-price">¥{hotel.price}/晚</Text>
-                <Text className="hotel-star">{hotel.star}星级</Text>
+                <Text className="hotel-star"><StarRating rating={hotel.star} size="small" /></Text>
               </View>
-              <Text className="hotel-user">上传用户: 商户{hotel.id}</Text>
+              <Text className="hotel-user">上传用户: {hotel.uploadedBy}</Text>
               {hotel.rejectionReason && (
                 <Text className="reject-reason">驳回原因: {hotel.rejectionReason}</Text>
               )}
@@ -372,12 +423,83 @@ const AuditPage = () => {
     );
   };
 
+  // 渲染已下线列表
+  const renderOfflineList = () => {
+    if (offlineList.length === 0) {
+      return <Empty description="暂无已下线数据" />;
+    }
+
+    return (
+      <View className="hotel-list">
+        {offlineList.map((hotel) => (
+          <View key={hotel.id} className="hotel-card offline">
+            <Image
+              className="hotel-image"
+              src={hotel.imageUrl || 'https://picsum.photos/200/150'}
+              mode="aspectFill"
+            />
+            <View className="hotel-info">
+              <Text className="hotel-name">{hotel.nameCn}</Text>
+              <Text className="hotel-name-en">{hotel.nameEn}</Text>
+              <Text className="hotel-address">{hotel.address}</Text>
+              <View className="hotel-meta">
+                <Text className="hotel-price">¥{hotel.price}/晚</Text>
+                <Text className="hotel-star"><StarRating rating={hotel.star} size="small" /></Text>
+              </View>
+              <Text className="hotel-user">上传用户: {hotel.uploadedBy}</Text>
+              {hotel.rejectionReason && (
+                <Text className="reject-reason">下线原因: {hotel.rejectionReason}</Text>
+              )}
+            </View>
+            <View className="hotel-actions">
+              <Button
+                type="default"
+                size="small"
+                className="action-btn view-btn"
+                onClick={() => {
+                  LocalStorage.set(STORAGE_KEYS.VIEW_HOTEL_ID, hotel.id);
+                  Taro.navigateTo({ url: '/pages/admin/audit/detail/index' });
+                }}
+              >
+                查看
+              </Button>
+              <Button
+                type="success"
+                size="small"
+                className="action-btn online-btn"
+                onClick={() => handleOnline(hotel)}
+              >
+                重新上线
+              </Button>
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <View className="audit-page">
       {/* 页面头部 */}
       <View className="page-header">
-        <Text className="page-title">审核管理</Text>
-        <Text className="page-desc">管理酒店上线审核与发布</Text>
+        <View className="header-left">
+          <Text className="page-title">审核管理</Text>
+          <Text className="page-desc">管理酒店上线审核与发布</Text>
+        </View>
+        <View className="header-right">
+          <Text className="user-name">管理员: {user?.username}</Text>
+          <Button
+            type="default"
+            size="small"
+            className="logout-btn"
+            onClick={() => {
+              logout();
+              Taro.reLaunch({ url: '/pages/admin/login/index' });
+            }}
+          >
+            退出登录
+          </Button>
+        </View>
       </View>
 
       {/* 统计卡片 */}
@@ -393,6 +515,10 @@ const AuditPage = () => {
         <View className="stats-card rejected" onClick={() => setActiveTab(2)}>
           <Text className="stats-count">{totalRejected}</Text>
           <Text className="stats-label">已拒绝</Text>
+        </View>
+        <View className="stats-card offline" onClick={() => setActiveTab(3)}>
+          <Text className="stats-count">{totalOffline}</Text>
+          <Text className="stats-label">已下线</Text>
         </View>
       </View>
 
@@ -411,6 +537,9 @@ const AuditPage = () => {
           </TabPane>
           <TabPane title={`已拒绝 (${totalRejected})`}>
             {renderRejectedList()}
+          </TabPane>
+          <TabPane title={`已下线 (${totalOffline})`}>
+            {renderOfflineList()}
           </TabPane>
         </Tabs>
       </View>

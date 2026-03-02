@@ -36,9 +36,9 @@ export interface IHotel {
   rejectionReason?: string;
   nearbyIntro?: string;
   tags?: string[];
-  description?: string; // 从 index.ts 补充
-  rating?: number; // 从 index.ts 补充
-  images?: string[]; // 从 index.ts 补充
+  description?: string;
+  rating?: number;
+  images?: string[];
 }
 
 // 用户角色枚举

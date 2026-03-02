@@ -1,12 +1,21 @@
 # 易宿酒店预订平台 (Easy Stay)
 
-本项目为 **第五期前端训练营** 大作业。
+> 本项目为 **第五期前端训练营** 大作业，一个基于 Taro 3 + React 的全端酒店预订管理系统。
 
-## 项目信息
+## 项目简介
 
-- **项目名称**：易宿酒店预订平台
-- **团队人数**：2-3 人
-- **截止时间**：2026 年 2 月 26 日 20:00
+易宿酒店预订平台是一个支持多端（PC端管理后台 + 移动端用户前台）的酒店管理系统。采用 Taro 3 框架开发，可同时编译为 H5 网页端和微信小程序。
+
+**核心功能：**
+- 🏨 酒店查询与预订（用户端）
+- 🏢 酒店信息录入与管理（商户端）
+- ✅ 酒店审核与发布（管理员端）
+- 📱 响应式布局，PC端与移动端自动适配
+
+## 在线访问
+
+-   https://hotel-project-hongshangqius-projects.vercel.app/
+
 
 ## 技术栈
 
@@ -15,6 +24,14 @@
 - **状态管理**：Zustand
 - **UI 组件库**：NutUI-React
 - **CSS 方案**：Sass/SCSS
+
+## 团队成员
+
+| 成员 | 负责模块 | 主要工作 |
+|------|----------|----------|
+| 尹乐熠 | 移动端基础功能、商户管理端、底层数据服务 | 日历组件、酒店列表分页、酒店录入表单、Mock 数据服务 |
+| 马欣荣 | 页面设计与路由 | UI 设计、页面跳转方案（hash 路由）、基础页面开发 |
+| 崔晋闻 | 用户端功能开发、管理端页面开发 | 用户预订、酒店详情、商户登录/注册、审核管理等功能 |
 
 ## 快速启动
 
@@ -27,74 +44,22 @@ npm run dev:h5
 
 # 启动微信小程序开发环境
 npm run dev:weapp
+
+# 构建生产环境
+npm run build:h5
 ```
 
-## 当前完成进度
+## 测试账号
 
-### ✅ 已完成
+| 角色 | 用户名 | 密码 | 说明 |
+|------|--------|------|------|
+| 管理员 | `admin` | `123456` | 可审核酒店、查看已发布列表 |
+| 管理员 | `manager` | `666666` | 可审核酒店、查看已发布列表 |
+| 商户 | `hotel01` | `123456` | 可录入酒店、管理自己的酒店 |
+| 商户 | `hotel02` | `123456` | 可录入酒店、管理自己的酒店 |
+| 商户 | (注册新账号) | - | 支持自行注册新商户 |
 
-| 模块 | 功能 | 状态 |
-|------|------|------|
-| **登录模块** | 账号密码登录、角色切换（商户/管理员） | ✅ 完成 |
-| **全局状态** | 用户登录状态、设备类型（PC/移动端） | ✅ 完成 |
-| **Layout框架** | 响应式布局，PC端侧边栏、移动端简化布局 | ✅ 完成 |
-| **StarRating组件** | 通用五角星评分组件（支持小/中/大三种尺寸） | ✅ 完成 |
-| **用户端首页** | Banner轮播、搜索卡片、日历组件 | ✅ 完成 |
-| **用户端列表** | 酒店列表分页加载、列表卡片展示 | ✅ 完成 |
-| **日历组件** | 入离日期选择、日期范围校验 | ✅ 完成 |
-| **用户端详情** | Banner轮播、返回导航、基础信息、房型列表、预订交互 | ✅ 完成 |
-| **商户录入页** | 表单框架、必填/选填字段、新增/编辑模式、提交功能 | ✅ 完成 |
-| **Mock数据服务** | CRUD操作、localStorage持久化、审核操作API | ✅ 完成 |
-| **管理员审核页** | 待审核列表、已发布列表、审核通过/驳回/下线功能 | ✅ 完成 |
-
-### 🔄 待开发
-
-| 模块 | 功能 | 状态 |
-|------|------|------|
-| **三端联调** | 录入→审核→展示全流程测试 | 🔄 待联调 |
-| **Bug修复** | 各端联调问题修复 | 🔄 待处理 |
-
----
-
-## 💡 已完成模块详情
-
-### 用户端详情页
-
-| 功能 | 说明 |
-|------|------|
-| Banner 轮播 | 多图轮播、手动滑动、自动播放 |
-| 返回导航栏 | 返回按钮、顶部吸顶效果 |
-| 基础信息展示 | 酒店名称（中英文）、星级、地址、价格 |
-| 房型列表 | 房型卡片展示、展开/收起、价格、预订按钮 |
-| 预订交互 | 确认弹窗、Toast 提示"预订成功" |
-
-### 商户录入页
-
-| 功能 | 说明 |
-|------|------|
-| 新增模式 | 空白表单、提交后状态为 PENDING |
-| 编辑模式 | 数据回显、更新酒店信息 |
-| 表单校验 | 必填字段验证 |
-| 提交功能 | 调用 createHotel/updateHotel API |
-
-### Mock 数据服务
-
-| API 方法 | 功能 |
-|----------|------|
-| getHotelsByPage | 分页获取酒店列表 |
-| getHotelById | 根据ID获取酒店详情 |
-| createHotel | 新增酒店（自动生成ID） |
-| updateHotel | 更新酒店信息 |
-| deleteHotel | 删除酒店 |
-| getPendingAuditList | 获取待审核列表（分页） |
-| getPublishedList | 获取已发布列表（分页） |
-| approveHotel | 审核通过 |
-| rejectHotel | 驳回审核（需填写原因） |
-| offlineHotel | 下线酒店 |
-
----
-
-## 目录结构
+## 项目目录结构
 
 ```
 src/
@@ -103,112 +68,23 @@ src/
 ├── app.scss                   # 全局样式
 ├── components/                # 公共组件
 │   ├── Layout/               # 响应式布局组件
-│   │   ├── index.tsx         # Layout实现
-│   │   └── index.scss        # Layout样式
 │   ├── StarRating/           # 星级评分组件
-│   │   ├── index.tsx         # StarRating实现
-│   │   └── index.scss        # 星级样式
 │   └── Calendar/             # 日历组件
-│       ├── index.tsx         # Calendar实现
-│       └── index.scss        # Calendar样式
 ├── pages/                    # 页面
 │   ├── user/                # 用户端 (移动端布局)
 │   │   ├── index/           # 首页 (酒店查询)
-│   │   │   ├── index.tsx
-│   │   │   ├── index.scss
-│   │   │   └── index.config.ts
 │   │   ├── list/            # 酒店列表
-│   │   │   ├── index.tsx
-│   │   │   ├── index.scss
-│   │   │   └── index.config.ts
 │   │   └── detail/          # 酒店详情
-│   │       ├── index.tsx
-│   │       ├── index.scss
-│   │       └── index.config.ts
 │   └── admin/               # 管理端 (PC端布局)
 │       ├── login/           # 登录页
-│       │   ├── index.tsx    # 登录表单、角色切换
-│       │   ├── index.scss
-│       │   └── index.config.ts
+│       ├── register/       # 注册页
 │       ├── manage/          # 商户录入页
-│       │   ├── index.tsx
-│       │   ├── index.scss
-│       │   └── index.config.ts
 │       └── audit/           # 审核页
-│           ├── index.tsx
-│           ├── index.scss
-│           └── index.config.ts
 └── shared/                  # 共享逻辑
     ├── store/               # 状态管理
-    │   ├── index.ts         # 主状态 (用户信息、设备类型)
-    │   └── useHotelStore.ts # 酒店搜索状态
     ├── types/               # 类型定义
-    │   ├── index.ts         # 统一导出
-    │   ├── hotel.ts         # 酒店类型
-    │   └── user.ts          # 用户类型
-    ├── services/            # 服务层
-    │   ├── request.ts       # 请求封装
-    │   └── hotelService.ts  # 酒店API
+    ├── services/            # 服务层 (Mock API)
     └── utils/               # 工具函数
-        ├── index.ts         # 工具导出
-        └── useEnvironment.ts # 环境检测Hook
-```
-
-## 核心功能说明
-
-### 登录与角色切换
-
-- 登录页包含账号、密码输入和商户/管理员角色切换
-- 登录成功后根据角色跳转到对应页面：
-  - 商户 → 录入页 (`/pages/admin/manage/index`)
-  - 管理员 → 审核页 (`/pages/admin/audit/index`)
-
-### 响应式 Layout
-
-- 基于 `isPC` 状态自动切换布局
-- **PC端**：左侧220px侧边栏 + 右侧主内容区
-- **移动端**：顶部标题栏 + 内容区
-- 登录页不包裹Layout，保持全屏
-
-### 全局状态管理 (Zustand)
-
-```typescript
-// useStore - 主状态
-interface AppState {
-  user: IUser | null;        // 当前登录用户
-  isPC: boolean;             // 是否PC端
-  isLogin: boolean;          // 是否已登录
-  login: (user: IUser) => void;
-  logout: () => void;
-  setDevice: (isPC: boolean) => void;
-}
-
-// useHotelStore - 酒店搜索状态
-interface HotelState {
-  searchParams: IHotelSearchParams;  // 搜索参数
-  calendarVisible: boolean;           // 日历显示状态
-  calendarMode: 'start' | 'end';     // 日历模式
-  setSearchParams: (params) => void;
-  setCalendarVisible: (visible, mode?) => void;
-}
-```
-
-### StarRating 组件使用
-
-```tsx
-import StarRating from '@/components/StarRating'
-
-// 默认中型
-<StarRating rating={4} />
-
-// 小型
-<StarRating rating={4} size="small" />
-
-// 大型
-<StarRating rating={4} size="large" />
-
-// 自定义最大星数
-<StarRating rating={5} maxStars={5} />
 ```
 
 ## 注意事项

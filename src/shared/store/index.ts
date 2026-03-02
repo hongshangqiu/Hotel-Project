@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { IUser, UserRole } from '../types';
+import { IUser } from '../types';
+import { LocalStorage, STORAGE_KEYS } from '../utils/LocalStorage';
 
 interface AppState {
   user: IUser | null;
@@ -10,11 +11,22 @@ interface AppState {
   setDevice: (isPC: boolean) => void;
 }
 
+// 初始化状态时尝试从 LocalStorage 恢复
+const getInitialUser = (): IUser | null => {
+  return LocalStorage.get<IUser>(STORAGE_KEYS.USER, null);
+};
+
 export const useStore = create<AppState>((set) => ({
-  user: null,
+  user: getInitialUser(),
   isPC: false,
-  isLogin: false,
-  login: (user) => set({ user, isLogin: true }),
-  logout: () => set({ user: null, isLogin: false }),
+  isLogin: !!getInitialUser(),
+  login: (user) => {
+    LocalStorage.set(STORAGE_KEYS.USER, user);
+    set({ user, isLogin: true });
+  },
+  logout: () => {
+    LocalStorage.remove(STORAGE_KEYS.USER);
+    set({ user: null, isLogin: false });
+  },
   setDevice: (isPC) => set({ isPC }),
 }));

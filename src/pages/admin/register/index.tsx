@@ -5,16 +5,8 @@ import { Button, Input } from '@nutui/nutui-react-taro'
 import { useStore } from '@/shared/store'
 import { UserRole } from '@/shared/types'
 import { LocalStorage, STORAGE_KEYS } from '@/shared/utils/LocalStorage'
+import { PRESET_MERCHANTS } from '@/shared/constants'
 import './index.scss'
-
-// 预设管理员账号（登录专用）
-const ADMIN_ACCOUNTS = ['admin', 'manager']
-
-// 预设商户账号
-const PRESET_MERCHANTS = [
-  { id: '1', username: 'hotel01', password: '123456', role: UserRole.MERCHANT },
-  { id: '2', username: 'hotel02', password: '123456', role: UserRole.MERCHANT },
-]
 
 const Register = () => {
   const { login } = useStore()

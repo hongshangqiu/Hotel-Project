@@ -6,25 +6,17 @@ import { IHotel } from '../../../shared/types';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import { useHotelStore } from '../../../shared/store/useHotelStore';
 import { useEnvironment } from '../../../shared/utils/useEnvironment';
+import { TAG_OPTIONS, STAR_OPTIONS, PRICE_OPTIONS, QQ_MAP_KEY } from '../../../shared/constants';
 import Calendar from '../../../components/Calendar/index';
 import './index.scss';
 
 const Index = () => {
   const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore();
   const { isPC } = useEnvironment();
-    const QQ_MAP_KEY = 'AWBBZ-HTZKV-NGKPK-5U2CL-EK6WH-P6FIT';
   const [bannerHotels, setBannerHotels] = useState<IHotel[]>([]);
   const [filterVisible, setFilterVisible] = useState(false);
   const [selectedStars, setSelectedStars] = useState<number[]>(searchParams.stars || []);
   const [selectedPriceRange, setSelectedPriceRange] = useState<[number, number] | undefined>(searchParams.priceRange);
-
-  const TAG_OPTIONS = ['亲子', '豪华', '免费停车场', '近地铁', '商务', '江景', '健身房', '泳池'];
-  const STAR_OPTIONS = [5, 4, 3, 2, 1];
-  const PRICE_OPTIONS = [
-    { label: '¥0–500', value: [0, 500] as [number, number] },
-    { label: '¥500–800', value: [500, 800] as [number, number] },
-    { label: '¥800+', value: [800, 9999] as [number, number] },
-  ];
 
   useEffect(() => {
     hotelService.getHotelsByPage(1, 3).then((res) => {
