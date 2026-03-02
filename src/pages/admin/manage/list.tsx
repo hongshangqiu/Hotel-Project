@@ -10,10 +10,14 @@ import './list.scss';
 
 const MerchantList = () => {
   const [list, setList] = useState<IHotel[]>([]);
-  const { user } = useStore();
+  const { user, isLogin } = useStore();
 
   useDidShow(() => {
-    hotelService.getMerchantHotels(user?.username).then(setList);
+    if (!isLogin || !user || !user.username) {
+      Taro.redirectTo({ url: '/pages/admin/login/index' });
+      return;
+    }
+    hotelService.getMerchantHotels(user.username).then(setList);
   });
 
   const getStatusInfo = (s: HotelStatus) => {

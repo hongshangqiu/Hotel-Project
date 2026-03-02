@@ -7,6 +7,7 @@ import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import { PROVINCES, CITIES_BY_PROVINCE } from '../../../shared/constants/regions';
 import { useHotelStore } from '../../../shared/store/useHotelStore';
 import Calendar from '../../../components/Calendar/index';
+import StarRating from '../../../components/StarRating';
 import './index.scss';
 
 const HotelList = () => {
@@ -349,7 +350,7 @@ const HotelList = () => {
             <View className='info'>
               <View className='name-row'>
                 <Text className='name'>{hotel.nameCn}</Text>
-                <Text className='star'>{hotel.star}星</Text>
+                <StarRating rating={hotel.star} size="small" />
               </View>
               <Text className='address'>{hotel.address}</Text>
               <View className='price-row'>

@@ -6,6 +6,7 @@ import { hotelService } from '../../../shared/services/hotelService';
 import { HotelStatus, IHotel, IHotelRoom } from '../../../shared/types/index';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import { useStore } from '../../../shared/store';
+import { TAG_OPTIONS } from '../../../shared/constants';
 import './index.scss';
 
 const HotelManage = () => {
@@ -17,31 +18,95 @@ const HotelManage = () => {
   const [currentStatus, setCurrentStatus] = useState<HotelStatus | null>(null);
   const { user } = useStore();
   const [originalHotel, setOriginalHotel] = useState<IHotel | null>(null);
-  const [tagOptions, setTagOptions] = useState<string[]>([
-    '亲子',
-    '豪华',
-    '免费停车场',
-    '近地铁',
-    '商务',
-    '江景',
-    '健身房',
-    '泳池',
-    '含早餐',
-    '精品',
-  ]);
+  const [tagOptions, setTagOptions] = useState<string[]>([...TAG_OPTIONS]);
   const [customTag, setCustomTag] = useState('');
+
+  // 草稿存储键名
+  const DRAFT_KEY = 'hotel_draft';
 
   // 实时监测图片值
   const imageUrlWatch = Form.useWatch('imageUrl', form);
   const watchedTags = Form.useWatch('tags', form);
   const selectedTags = Array.isArray(watchedTags) ? watchedTags : [];
 
+  // 自动保存草稿
+  const saveDraft = () => {
+    if (!isEdit && user) {
+      const formData = form.getFieldsValue(true);
+      const draft = {
+        ...formData,
+        rooms: roomList,
+        savedAt: Date.now(),
+        username: user.username,
+      };
+      LocalStorage.set(DRAFT_KEY, draft);
+    }
+  };
+
+  // 加载草稿
+  const loadDraft = () => {
+    const draft = LocalStorage.get<any>(DRAFT_KEY);
+    if (draft && !isEdit && !hotelId) {
+      // 检查草稿是否是当前用户的
+      if (draft.username === user?.username) {
+        Taro.showModal({
+          title: '发现未提交的草稿',
+          content: '是否恢复之前未完成的填写？',
+          success: (res) => {
+            if (res.confirm) {
+              form.setFieldsValue({
+                nameCn: draft.nameCn || '',
+                star: draft.star || 0,
+                address: draft.address || '',
+                imageUrl: draft.imageUrl || '',
+                openingTime: draft.openingTime || '',
+                nearbyIntro: draft.nearbyIntro || '',
+                tags: draft.tags || [],
+              });
+              setRoomList(draft.rooms || []);
+              Taro.showToast({ title: '已恢复草稿', icon: 'success' });
+            } else {
+              // 拒绝恢复则清除草稿
+              LocalStorage.remove(DRAFT_KEY);
+            }
+          }
+        });
+      } else {
+        // 不是当前用户的草稿，直接清除
+        LocalStorage.remove(DRAFT_KEY);
+      }
+    }
+  };
+
+  // 清除草稿
+  const clearDraft = () => {
+    LocalStorage.remove(DRAFT_KEY);
+  };
+
   useEffect(() => {
+    // 检查登录状态
+    if (!user) {
+      Taro.redirectTo({ url: '/pages/admin/login/index' });
+      return;
+    }
     if (hotelId) {
       setIsEdit(true);
       loadHotelDetail(hotelId);
+    } else {
+      // 添加模式，加载草稿
+      loadDraft();
     }
-  }, [hotelId]);
+  }, [hotelId, user]);
+
+  // 监听表单变化，自动保存草稿（添加模式下）
+  useEffect(() => {
+    if (!isEdit && !hotelId && user) {
+      const timer = setTimeout(() => {
+        saveDraft();
+      }, 1000); // 1秒防抖
+      return () => clearTimeout(timer);
+    }
+  }, [roomList, isEdit, hotelId, user]);
 
   const loadHotelDetail = async (id: string) => {
     try {
@@ -113,6 +178,12 @@ const HotelManage = () => {
   };
 
   const onFinish = async (values: any) => {
+    // 检查用户登录状态
+    if (!user || !user.username) {
+      Taro.showToast({ title: '请重新登录', icon: 'none' });
+      Taro.redirectTo({ url: '/pages/admin/login/index' });
+      return;
+    }
     if (values.nearbyIntro && values.nearbyIntro.length > 200) {
       Taro.showToast({ title: '周边简介不能超过200字', icon: 'none' });
       return;
@@ -131,37 +202,29 @@ const HotelManage = () => {
         })),
       };
       if (isEdit && hotelId) {
-        if (currentStatus === HotelStatus.PUBLISHED) {
-          await hotelService.createHotel({
-            ...finalData,
-            status: HotelStatus.PENDING,
-            uploadedBy: originalHotel?.uploadedBy || user?.username || 'admin',
-            sourceHotelId: hotelId,
-          });
-          Taro.showToast({ title: '已提交变更申请，请等待审核', icon: 'success' });
-        } else {
-          if (currentStatus === HotelStatus.REJECTED && !hasChanges(finalData, originalHotel)) {
-            Taro.showToast({ title: '驳回后需修改内容才能提交', icon: 'none' });
-            return;
-          }
-          await hotelService.updateHotel(hotelId, {
-            ...finalData,
-            status: HotelStatus.PENDING,
-            rejectionReason: undefined,
-          });
-          Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
+        // 无论什么状态，都直接更新酒店信息
+        if (currentStatus === HotelStatus.REJECTED && !hasChanges(finalData, originalHotel)) {
+          Taro.showToast({ title: '驳回后需修改内容才能提交', icon: 'none' });
+          return;
         }
+        await hotelService.updateHotel(hotelId, {
+          ...finalData,
+          status: HotelStatus.PENDING,
+          rejectionReason: undefined,
+        });
+        Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
       } else {
         await hotelService.createHotel({
           ...finalData,
           status: HotelStatus.PENDING,
-          uploadedBy: user?.username || 'admin',
+          uploadedBy: user.username,
         });
         Taro.showToast({ title: '已提交，请等待审核', icon: 'success' });
       }
       setTimeout(() => {
-        // 保存成功后清除编辑ID，让返回时重新加载数据
+        // 保存成功后清除编辑ID和草稿，让返回时重新加载数据
         LocalStorage.remove(STORAGE_KEYS.EDIT_HOTEL_ID);
+        clearDraft();
         Taro.navigateBack();
       }, 1500);
     } catch (e) {
@@ -253,7 +316,23 @@ const HotelManage = () => {
           onFinishFailed={() => Taro.showToast({ title: '必填项未填满', icon: 'none' })}
           footer={
             <View className='admin-manage-footer'>
-              <Button className='c-btn' onClick={() => Taro.navigateBack()}>取消</Button>
+              <Button className='c-btn' onClick={() => {
+                // 取消时，如果是添加模式则询问是否保存草稿
+                if (!isEdit && !hotelId) {
+                  Taro.showModal({
+                    title: '提示',
+                    content: '是否保存草稿以便下次继续？',
+                    success: (res) => {
+                      if (!res.confirm) {
+                        clearDraft();
+                      }
+                      Taro.navigateBack();
+                    }
+                  });
+                } else {
+                  Taro.navigateBack();
+                }
+              }}>取消</Button>
               <Button className='s-btn' type='primary' onClick={() => form.submit()}>确认提交</Button>
             </View>
           }

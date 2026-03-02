@@ -1,22 +1,43 @@
-import Taro from '@tarojs/taro';
 import { IHotel, HotelStatus } from '../types/index';
 import { LocalStorage, STORAGE_KEYS } from '../utils/LocalStorage';
 
-const DEV_SEED_FLAG = '__HOTEL_DEV_SEEDED__';
+// 初始化标记键名
+const DEV_SEED_FLAG_KEY = '__HOTEL_DEV_SEEDED__';
 
-const ensureDevSeed = () => {
-  const isDev = process.env.NODE_ENV === 'development';
-  const isWeb = typeof Taro.getEnv === 'function' && Taro.getEnv() === Taro.ENV_TYPE.WEB;
-  if (!isDev || !isWeb) return;
-
+// 主动初始化假数据的方法 - 在应用启动时调用
+export const initializeMockData = () => {
   try {
-    if (sessionStorage.getItem(DEV_SEED_FLAG) !== '1') {
-      LocalStorage.remove(STORAGE_KEYS.HOTEL_MAP);
-      sessionStorage.setItem(DEV_SEED_FLAG, '1');
+    // 检查是否已有数据，避免覆盖真实数据
+    const existingData = LocalStorage.get<Record<string, IHotel>>(STORAGE_KEYS.HOTEL_MAP);
+    if (existingData && Object.keys(existingData).length > 0) {
+      // 已有真实数据，标记已初始化并返回
+      LocalStorage.set(DEV_SEED_FLAG_KEY, true);
+      return;
+    }
+
+    // 无数据时才初始化mock数据
+    const isSeeded = LocalStorage.get<boolean>(DEV_SEED_FLAG_KEY, false);
+    if (!isSeeded) {
+      const initial: Record<string, IHotel> = {};
+      MOCK_HOTELS.forEach(h => initial[h.id] = h);
+      LocalStorage.set(STORAGE_KEYS.HOTEL_MAP, initial);
+      LocalStorage.set(DEV_SEED_FLAG_KEY, true);
     }
   } catch {
-    // Ignore if sessionStorage is not available.
+    // 如果出错，强制初始化一次假数据
+    try {
+      const initial: Record<string, IHotel> = {};
+      MOCK_HOTELS.forEach(h => initial[h.id] = h);
+      LocalStorage.set(STORAGE_KEYS.HOTEL_MAP, initial);
+    } catch {
+      // Ignore if LocalStorage is not available.
+    }
   }
+};
+
+const ensureDevSeed = () => {
+  // 始终初始化假数据，不再限制环境
+  initializeMockData();
 };
 
 const TAG_POOL = [
@@ -31,7 +52,7 @@ const TAG_POOL = [
 // 初始假数据
 const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
   id: `${index + 1}`,
-  uploadedBy: 'admin',
+  uploadedBy: 'hotel01',  // 全部归为 hotel01 账户
   nameCn: `易宿精选酒店 ${index + 1} 号`,
   nameEn: `Easy Stay Hotel No.${index + 1}`,
   address: `上海市浦东新区世纪大道 ${100 + index} 号`,
@@ -51,7 +72,14 @@ const MOCK_HOTELS: IHotel[] = Array.from({ length: 15 }).map((_, index) => ({
       policy: '准时入离'
     }
   ],
-  status: index === 0 ? HotelStatus.PENDING : HotelStatus.PUBLISHED, // 模拟一个审核中的
+  // 状态分布：1条待审核，10条已发布，2条已下线，2条已拒绝
+  status: index === 0 
+    ? HotelStatus.PENDING 
+    : index <= 10 
+      ? HotelStatus.PUBLISHED 
+      : index <= 12 
+        ? HotelStatus.OFFLINE 
+        : HotelStatus.REJECTED,
   imageUrl: `https://picsum.photos/200/200?random=${index}`,
   tags: TAG_POOL[index % TAG_POOL.length],
 }));
@@ -195,6 +223,19 @@ export const hotelService = {
       resolve({
         list: rejected.slice(start, start + pageSize),
         total: rejected.length
+      });
+    });
+  },
+
+  // 管理端：已下线列表
+  getOfflineList: async (page: number, pageSize: number = 10): Promise<{ list: IHotel[], total: number }> => {
+    return new Promise((resolve) => {
+      const allMap = getLocalData();
+      const offline = Object.values(allMap).filter(h => h.status === HotelStatus.OFFLINE);
+      const start = (page - 1) * pageSize;
+      resolve({
+        list: offline.slice(start, start + pageSize),
+        total: offline.length
       });
     });
   },

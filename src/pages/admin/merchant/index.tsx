@@ -1,11 +1,12 @@
 import { View, Text, Image } from '@tarojs/components';
-import Taro, { useDidShow, useShow } from '@tarojs/taro';
-import { useState, useRef } from 'react';
+import Taro, { useDidShow } from '@tarojs/taro';
+import { useState, useRef, useEffect } from 'react';
 import { Button, Tag, Empty } from '@nutui/nutui-react-taro';
 import { useStore } from '@/shared/store';
 import { hotelService } from '@/shared/services/hotelService';
-import { HotelStatus, IHotel } from '@/shared/types';
+import { HotelStatus, IHotel, UserRole } from '@/shared/types';
 import { LocalStorage, STORAGE_KEYS } from '@/shared/utils/LocalStorage';
+import StarRating from '@/components/StarRating';
 import './index.scss';
 
 const MerchantHome = () => {
@@ -13,8 +14,33 @@ const MerchantHome = () => {
   const [list, setList] = useState<IHotel[]>([]);
   const isFirstLoad = useRef(true);
 
+  // 使用 useEffect 确保初始化时加载数据（无论是首次渲染还是页面导航）
+  useEffect(() => {
+    // 检查登录状态和角色
+    if (!user || !user.username) {
+      Taro.redirectTo({ url: '/pages/admin/login/index' });
+      return;
+    }
+    // 管理员不能访问商户中心
+    if (user.role === UserRole.ADMIN) {
+      Taro.redirectTo({ url: '/pages/admin/audit/index' });
+      return;
+    }
+    loadHotels();
+  }, [user]);
+
   // 每次页面显示时都刷新数据（包括从编辑页返回时）
   useDidShow(() => {
+    // 检查登录状态和角色
+    if (!user || !user.username) {
+      Taro.redirectTo({ url: '/pages/admin/login/index' });
+      return;
+    }
+    // 管理员不能访问商户中心
+    if (user.role === UserRole.ADMIN) {
+      Taro.redirectTo({ url: '/pages/admin/audit/index' });
+      return;
+    }
     loadHotels();
   });
 
@@ -57,7 +83,11 @@ const MerchantHome = () => {
             </Button>
           </View>
         </View>
-        <Button className='hero-add' type='primary' onClick={() => Taro.navigateTo({ url: '/pages/admin/manage/index' })}>
+        <Button className='hero-add' type='primary' onClick={() => {
+          // 清除之前的编辑ID，确保添加页面是空白表单
+          LocalStorage.remove(STORAGE_KEYS.EDIT_HOTEL_ID);
+          Taro.navigateTo({ url: '/pages/admin/manage/index' });
+        }}>
           添加酒店
         </Button>
       </View>
@@ -88,7 +118,7 @@ const MerchantHome = () => {
                     </View>
                     <Text className='hotel-addr'>{hotel.address}</Text>
                     <View className='hotel-meta'>
-                      <Text>星级：{hotel.star}</Text>
+                      <Text>星级：<StarRating rating={hotel.star} size="small" /></Text>
                       <Text>房型：{hotel.rooms?.length || 0}</Text>
                       <Text>起价：¥{hotel.price}</Text>
                     </View>

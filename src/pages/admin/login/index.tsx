@@ -1,23 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text } from '@tarojs/components'
 import { Button, Input } from '@nutui/nutui-react-taro'
 import { useStore } from '@/shared/store'
 import { UserRole } from '@/shared/types'
 import { LocalStorage, STORAGE_KEYS } from '@/shared/utils/LocalStorage'
+import { ADMIN_ACCOUNTS, PRESET_MERCHANTS } from '@/shared/constants'
 import './index.scss'
-
-// 预设管理员账号
-const ADMIN_ACCOUNTS = [
-  { username: 'admin', password: '123456' },
-  { username: 'manager', password: '666666' },
-]
 
 const Login = () => {
   const { login } = useStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // 初始化预设商户账号（确保登录页也能初始化）
+  useEffect(() => {
+    const initMerchants = () => {
+      const users = LocalStorage.get<any[]>(STORAGE_KEYS.USER_LIST) || []
+      if (users.length === 0) {
+        LocalStorage.set(STORAGE_KEYS.USER_LIST, PRESET_MERCHANTS)
+      }
+    }
+    initMerchants()
+  }, [])
 
   // 自动根据账号判断角色
   const detectRole = (name: string): UserRole => {
@@ -49,11 +55,11 @@ const Login = () => {
     
     // 商户验证 - 检查本地存储的注册用户
     const users = LocalStorage.get<any[]>(STORAGE_KEYS.USER_LIST) || []
-    const user = users.find(u => u.username === name && u.password === pwd)
+    const user = users.find(u => u.username.toLowerCase() === name.toLowerCase() && u.password === pwd)
     
     if (!user) {
       // 检查是否是已注册用户但密码错误
-      const existingUser = users.find(u => u.username === name)
+      const existingUser = users.find(u => u.username.toLowerCase() === name.toLowerCase())
       if (existingUser) {
         return { valid: false, role, error: '密码错误' }
       }
@@ -79,7 +85,7 @@ const Login = () => {
         setLoading(false)
         Taro.showToast({ title: result.error || '登录失败', icon: 'none' })
         return
-      }
+    }
 
       const user = {
         id: username.toLowerCase() === 'admin' ? '0' : Date.now().toString(),
@@ -131,39 +137,39 @@ const Login = () => {
         <View className='form-card'>
           <Text className='form-title'>账号登录</Text>
 
-          <View className='form-item'>
+        <View className='form-item'>
             <View className='input-wrapper'>
-              <Input
-                className='input'
-                type='text'
-                placeholder='请输入账号'
-                value={username}
-                onChange={(val) => setUsername(val)}
-              />
+          <Input
+            className='input'
+            type='text'
+            placeholder='请输入账号'
+            value={username}
+            onChange={(val) => setUsername(val)}
+          />
             </View>
-          </View>
+        </View>
 
-          <View className='form-item'>
+        <View className='form-item'>
             <View className='input-wrapper'>
-              <Input
-                className='input'
-                type='password'
-                placeholder='请输入密码'
-                value={password}
-                onChange={(val) => setPassword(val)}
-              />
-            </View>
+          <Input
+            className='input'
+            type='password'
+            placeholder='请输入密码'
+            value={password}
+            onChange={(val) => setPassword(val)}
+          />
           </View>
+        </View>
 
-          <Button
-            type='primary'
-            block
-            loading={loading}
-            onClick={handleLogin}
-            className='login-btn'
-          >
+        <Button
+          type='primary'
+          block
+          loading={loading}
+          onClick={handleLogin}
+          className='login-btn'
+        >
             {loading ? '登录中...' : '登录'}
-          </Button>
+        </Button>
         </View>
 
         <View className='register-link'>
