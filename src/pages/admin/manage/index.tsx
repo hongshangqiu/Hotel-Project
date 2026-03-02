@@ -1,9 +1,9 @@
 import { View, Text, Image } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Button, Rate, TextArea, Row, Col, Tag } from '@nutui/nutui-react-taro';
 import { hotelService } from '../../../shared/services/hotelService';
-import { HotelStatus, IHotel, IHotelRoom } from '../../../shared/types/index';
+import { HotelStatus, IHotel, IHotelRoom, IPriceConfig } from '../../../shared/types/index';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import { useStore } from '../../../shared/store';
 import { TAG_OPTIONS } from '../../../shared/constants';
@@ -20,6 +20,23 @@ const HotelManage = () => {
   const [originalHotel, setOriginalHotel] = useState<IHotel | null>(null);
   const [tagOptions, setTagOptions] = useState<string[]>([...TAG_OPTIONS]);
   const [customTag, setCustomTag] = useState('');
+
+  // 定位状态
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+
+  // 价格配置状态
+  const [priceConfig, setPriceConfig] = useState<IPriceConfig>({
+    weekendMultiplier: 1.1,
+    holidayMultiplier: 1.2,
+    datePriceOverrides: [],
+    seasons: []
+  });
+  // 固定日期价格配置
+  const [dateOverrides, setDateOverrides] = useState<{date: string, multiplier: number}[]>([]);
+  // 添加新的日期价格
+  const [newOverrideDate, setNewOverrideDate] = useState('');
+  const [newOverrideMultiplier, setNewOverrideMultiplier] = useState(1.2);
 
   // 草稿存储键名
   const DRAFT_KEY = 'hotel_draft';
@@ -123,6 +140,14 @@ const HotelManage = () => {
         if (data.tags && data.tags.length > 0) {
           setTagOptions(prev => Array.from(new Set([...prev, ...data.tags || []])));
         }
+        // 加载价格配置
+        if (data.priceConfig) {
+          setPriceConfig(data.priceConfig);
+          setDateOverrides(data.priceConfig.datePriceOverrides?.map(d => ({
+            date: d.date,
+            multiplier: d.multiplier || 1
+          })) || []);
+        }
       }
     } finally {
       Taro.hideLoading();
@@ -194,12 +219,22 @@ const HotelManage = () => {
     }
     Taro.showLoading({ title: '正在提交...', mask: true });
     try {
+      // 构建价格配置
+      const finalPriceConfig: IPriceConfig = {
+        ...priceConfig,
+        datePriceOverrides: dateOverrides.map(d => ({
+          date: d.date,
+          multiplier: d.multiplier
+        }))
+      };
+      
       const finalData = {
         ...values,
         rooms: roomList.map(room => ({
           ...room,
           size: room.size ? `${String(room.size).replace(/㎡/g, '')}㎡` : '',
         })),
+        priceConfig: finalPriceConfig
       };
       if (isEdit && hotelId) {
         // 无论什么状态，都直接更新酒店信息
@@ -283,6 +318,74 @@ const HotelManage = () => {
     setCustomTag('');
   };
 
+  // 获取当前位置
+  const handleGetLocation = useCallback(async () => {
+    setIsLocating(true);
+    setLocationError('');
+
+    try {
+      // 检查定位权限
+      const settingRes = await Taro.getSetting();
+      if (!settingRes.authSetting['scope.userLocation']) {
+        // 请求定位权限
+        const authRes = await Taro.authorize({ scope: 'scope.userLocation' });
+        console.log('authorize res:', authRes);
+      }
+
+      // 获取位置
+      const locationRes = await Taro.getLocation({
+        type: 'gcj02',
+        isHighAccuracy: true,
+      });
+
+      const { latitude, longitude } = locationRes;
+
+      // 使用腾讯地图逆地理编码获取地址
+      const apiKey = 'AWBBZ-HTZKV-NGKPK-5U2CL-EK6WH-P6FIT';
+      const url = `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${apiKey}&get_poi=0`;
+
+      try {
+        const response = await Taro.request({
+          url,
+          method: 'GET',
+        });
+
+        if (response.data && response.data.status === 0) {
+          const result = response.data.result;
+          const address = result.address || '';
+          const addressComponent = result.ad_info || {};
+          const fullAddress = `${addressComponent.province || ''}${addressComponent.city || ''}${addressComponent.district || ''}${address}`;
+
+          form.setFieldsValue({ address: fullAddress });
+          Taro.showToast({ title: '定位成功', icon: 'success' });
+        } else {
+          // 如果没有配置API Key或请求失败，使用坐标作为提示
+          form.setFieldsValue({ address: `经度:${longitude.toFixed(4)},纬度:${latitude.toFixed(4)}` });
+          Taro.showToast({ title: '已获取坐标，请手动输入地址', icon: 'none' });
+        }
+      } catch (geoError) {
+        console.error('逆地理编码失败:', geoError);
+        // 逆地理编码失败时，使用坐标
+        form.setFieldsValue({ address: `经度:${longitude.toFixed(4)},纬度:${latitude.toFixed(4)}` });
+        Taro.showToast({ title: '已获取坐标，请手动输入地址', icon: 'none' });
+      }
+    } catch (error: any) {
+      console.error('定位失败:', error);
+      let errorMsg = '定位失败';
+
+      if (error.errMsg?.includes('auth deny')) {
+        errorMsg = '已拒绝定位权限';
+      } else if (error.errMsg?.includes('authorize')) {
+        errorMsg = '需要授权定位权限';
+      }
+
+      setLocationError(errorMsg);
+      Taro.showToast({ title: errorMsg, icon: 'none' });
+    } finally {
+      setIsLocating(false);
+    }
+  }, [form]);
+
   const renderStatus = () => {
     if (!isEdit || !currentStatus) return null;
     const statusMap = {
@@ -352,7 +455,21 @@ const HotelManage = () => {
               </Col>
             </Row>
             <Form.Item label='详细地址' name='address' rules={[{ required: true, message: '必填' }]}>
-              <Input placeholder='请输入详细地理位置' />
+              <View className='address-input-row'>
+                <Input 
+                  className='address-input' 
+                  placeholder='请输入详细地理位置' 
+                />
+                <Button 
+                  size='small' 
+                  type='primary' 
+                  loading={isLocating}
+                  onClick={handleGetLocation}
+                >
+                  {isLocating ? '定位中' : '📍 获取定位'}
+                </Button>
+              </View>
+              {locationError && <Text className='location-error'>{locationError}</Text>}
             </Form.Item>
           </View>
 
@@ -451,6 +568,77 @@ const HotelManage = () => {
             <Form.Item label='周边简介' name='nearbyIntro'>
               <TextArea maxLength={200} placeholder='周边交通、配套、地标等（不超过200字）' />
             </Form.Item>
+          </View>
+
+          {/* 价格调整配置 */}
+          <View className='manage-card'>
+            <View className='manage-card-title'>价格调整配置</View>
+            
+            <View className='price-config-section'>
+              <Text className='section-label'>周末价格调整</Text>
+              <View className='multiplier-input'>
+                <Input
+                  type='number'
+                  value={String(priceConfig.weekendMultiplier || 1)}
+                  onChange={(val) => setPriceConfig(prev => ({ ...prev, weekendMultiplier: Number(val) }))}
+                />
+                <Text className='unit-text'>倍 (如 1.1 = 加价10%)</Text>
+              </View>
+            </View>
+
+            <View className='price-config-section'>
+              <Text className='section-label'>节假日价格调整</Text>
+              <View className='multiplier-input'>
+                <Input
+                  type='number'
+                  value={String(priceConfig.holidayMultiplier || 1)}
+                  onChange={(val) => setPriceConfig(prev => ({ ...prev, holidayMultiplier: Number(val) }))}
+                />
+                <Text className='unit-text'>倍 (如 1.2 = 加价20%)</Text>
+              </View>
+            </View>
+
+            <View className='price-config-section'>
+              <Text className='section-label'>指定日期价格调整</Text>
+              {dateOverrides.length > 0 && (
+                <View className='date-overrides-list'>
+                  {dateOverrides.map((override, idx) => (
+                    <View key={idx} className='override-item'>
+                      <Text>{override.date}</Text>
+                      <Text>×{override.multiplier}</Text>
+                      <Text className='remove-btn' onClick={() => {
+                        const newList = [...dateOverrides];
+                        newList.splice(idx, 1);
+                        setDateOverrides(newList);
+                      }}>删除</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <View className='add-override-row'>
+                <Input
+                  className='date-input'
+                  placeholder='日期 YYYY-MM-DD'
+                  value={newOverrideDate}
+                  onChange={(val) => setNewOverrideDate(val)}
+                />
+                <Input
+                  className='multiplier-input-small'
+                  type='number'
+                  placeholder='倍数'
+                  value={String(newOverrideMultiplier)}
+                  onChange={(val) => setNewOverrideMultiplier(Number(val))}
+                />
+                <Button size='small' onClick={() => {
+                  if (!newOverrideDate) {
+                    Taro.showToast({ title: '请输入日期', icon: 'none' });
+                    return;
+                  }
+                  setDateOverrides([...dateOverrides, { date: newOverrideDate, multiplier: newOverrideMultiplier }]);
+                  setNewOverrideDate('');
+                }}>添加</Button>
+              </View>
+            </View>
           </View>
         </Form>
       </View>

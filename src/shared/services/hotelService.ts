@@ -138,9 +138,9 @@ export const hotelService = {
         if (keyword) {
           const kw = keyword.toLowerCase();
           filteredHotels = filteredHotels.filter(h =>
-            h.nameCn.toLowerCase().includes(kw) ||
-            h.nameEn.toLowerCase().includes(kw) ||
-            h.address.toLowerCase().includes(kw)
+            (h.nameCn || '').toLowerCase().includes(kw) ||
+            (h.nameEn || '').toLowerCase().includes(kw) ||
+            (h.address || '').toLowerCase().includes(kw)
           );
         }
 
