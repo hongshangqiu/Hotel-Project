@@ -63,38 +63,37 @@ const Index = () => {
       console.log('使用浏览器定位');
       // 浏览器定位会弹出授权提示
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const baseUrl = `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${QQ_MAP_KEY}&get_poi=0`;
-            const jsonp = (url: string) => new Promise<any>((resolve, reject) => {
-              const callbackName = `__qqmap_cb_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-              const script = document.createElement('script');
-              (window as any)[callbackName] = (data: any) => {
-                resolve(data);
-                delete (window as any)[callbackName];
-                script.remove();
-              };
-              script.onerror = () => {
-                reject(new Error('jsonp failed'));
-                delete (window as any)[callbackName];
-                script.remove();
-              };
-              script.src = `${url}&output=jsonp&callback=${callbackName}`;
-              document.body.appendChild(script);
-            });
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const baseUrl = `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${QQ_MAP_KEY}&get_poi=0`;
+          const jsonp = (url: string) => new Promise<any>((resolve, reject) => {
+            const callbackName = `__qqmap_cb_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const script = document.createElement('script');
+            (window as any)[callbackName] = (data: any) => {
+              resolve(data);
+              delete (window as any)[callbackName];
+              script.remove();
+            };
+            script.onerror = () => {
+              reject(new Error('jsonp failed'));
+              delete (window as any)[callbackName];
+              script.remove();
+            };
+            script.src = `${url}&output=jsonp&callback=${callbackName}`;
+            document.body.appendChild(script);
+          });
 
-            const resp = await jsonp(baseUrl);
+          jsonp(baseUrl).then((resp: any) => {
             const city = resp?.result?.address_component?.city;
             if (city) {
               setSearchParams({ city });
               Taro.showToast({ title: '定位成功', icon: 'success' });
               return;
             }
-            throw new Error('no city');
-          } catch {
             Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
-          }
+          }).catch(() => {
+            Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
+          });
         },
         (error) => {
           let msg = '定位失败，请检查权限';
