@@ -33,9 +33,15 @@ const HotelList = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  // Zustand Store
+  const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore();
+  
+  // 搜索栏关键词（优先使用 Store 中的词以保证回显）
+  const [keyword, setKeyword] = useState(searchParams.keyword || '');
+
   // 标记是否有活跃的搜索/筛选（用于置顶显示）
   const [isSearchResult, setIsSearchResult] = useState(false);
-  
+
   // 排序状态
   const [showSort, setShowSort] = useState(false)
   const [sortType, setSortType] = useState<'priceAsc' | 'priceDesc' | 'star'>('priceAsc')
@@ -59,20 +65,17 @@ const HotelList = () => {
     PROVINCES.indexOf('上海市') >= 0 ? PROVINCES.indexOf('上海市') : 0,
     0,
   ])
-  const { searchParams, setCalendarVisible, setSearchParams } = useHotelStore()
 
-  // 搜索栏关键词
-  const [keyword, setKeyword] = useState('')
-
-  // 处理搜索
-  const handleSearch = useCallback(() => {
-    setSearchParams({ ...searchParams, keyword })
-  }, [keyword, searchParams, setSearchParams])
+  // 处理搜索 (融合了防抖、收起键盘和参数同步)
+  const onSearch = useCallback(() => {
+    Taro.hideKeyboard?.().catch(() => { });
+    setSearchParams({ ...searchParams, keyword: keyword.trim() });
+  }, [keyword, searchParams, setSearchParams]);
 
   // 处理输入
   const onKeywordChange = useCallback((e) => {
-    setKeyword(e.detail.value)
-  }, [])
+    setKeyword(e.detail.value);
+  }, []);
 
   // 使用 ref 缓存回调函数，避免不必要的重渲染
   const onCityColumnChange = useCallback((e) => {
@@ -86,7 +89,7 @@ const HotelList = () => {
       setCityRange([PROVINCES, nextCities])
       setCityIndex([value, 0])
 
-      // 同步展示文本（你也可以等 onChange 再设）
+      // 同步展示文本
       setProvince(nextProvince)
       setCity(nextCities[0])
     }
@@ -151,7 +154,7 @@ const HotelList = () => {
       if (newList.length < 5) {
         setHasMore(false); // 不满5条说明到底了
       }
-      setList(prev => [...prev, ...newList]);
+      setList(prev => (currentPage === 1 ? newList : [...prev, ...newList]))
       setPage(currentPage + 1);
     } catch (err) {
       Taro.showToast({ title: '加载失败', icon: 'none' });
@@ -159,6 +162,7 @@ const HotelList = () => {
       setLoading(false);
     }
   }, [loading, hasMore, sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags, searchParams.city]);
+
 
   // 初始化加载
   useEffect(() => {
@@ -194,7 +198,7 @@ const HotelList = () => {
       {/* 顶部搜索区 */}
       <View className='search-bar'>
 
-        {/* 搜索栏：先只做UI不做功能 */}
+        {/* 搜索栏 */}
         <View className='keyword-row'>
           <View className='keyword-input'>
             <Input
@@ -202,11 +206,12 @@ const HotelList = () => {
               value={keyword}
               placeholder='搜索酒店名/地址/关键词'
               onInput={onKeywordChange}
-              onConfirm={handleSearch}
+              confirmType='search'
+              onConfirm={onSearch}
             />
           </View>
 
-          <View className='keyword-btn' onClick={handleSearch}>搜索</View>
+          <View className='keyword-btn' onClick={onSearch}>搜索</View>
         </View>
 
       </View>
