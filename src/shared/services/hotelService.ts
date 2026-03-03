@@ -119,7 +119,8 @@ export const hotelService = {
     stars?: number[],
     priceRange?: [number, number],
     keyword?: string,
-    tags?: string[]
+    tags?: string[],
+    city?: string
   ): Promise<{ list: IHotel[], total: number }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -141,6 +142,15 @@ export const hotelService = {
             (h.nameCn || '').toLowerCase().includes(kw) ||
             (h.nameEn || '').toLowerCase().includes(kw) ||
             (h.address || '').toLowerCase().includes(kw)
+          );
+        }
+
+        // 城市筛选
+        if (city) {
+          const c = city.toLowerCase();
+          filteredHotels = filteredHotels.filter(h =>
+            (h.address || '').toLowerCase().includes(c) ||
+            (h.nameCn || '').toLowerCase().includes(c)
           );
         }
 

@@ -127,7 +127,8 @@ const HotelList = () => {
         selectedStars,
         priceRange,
         searchParams.keyword,
-        searchParams.tags
+        searchParams.tags,
+        searchParams.city
       )
       const newList = res?.list ?? []
       const totalCount = res?.total ?? 0
@@ -144,7 +145,7 @@ const HotelList = () => {
     } finally {
       setLoading(false);
     }
-  }, [loading, hasMore, sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags]);
+  }, [loading, hasMore, sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags, searchParams.city]);
 
   // 初始化加载
   useEffect(() => {
@@ -154,7 +155,7 @@ const HotelList = () => {
   useEffect(() => {
     setSelectedStars(searchParams.stars || [])
     setPriceRange(searchParams.priceRange)
-  }, [searchParams.stars, searchParams.priceRange])
+  }, [searchParams.stars, searchParams.priceRange, searchParams.tags])
 
 
   // 条件变化 → 重置分页
@@ -162,7 +163,7 @@ const HotelList = () => {
     setPage(1)
     setHasMore(true)
     setList([])
-  }, [sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags])
+  }, [sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags, searchParams.city])
 
 
   // 页码变化 → 请求

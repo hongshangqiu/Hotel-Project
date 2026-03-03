@@ -42,7 +42,7 @@ const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate }) =>
       <View className='info'>
         <View className='name-row'>
           <Text className='name'>{hotel.nameCn}</Text>
-          <StarRating rating={hotel.star} size="small" />
+          <StarRating rating={hotel.star || 0} size="small" />
         </View>
         <Text className='address'>{hotel.address}</Text>
         <View className='price-row'>
