@@ -13,9 +13,34 @@
     background: radial-gradient(120% 120% at 0% 0%, #fff2dc 0%, #fef9ef 35%, #ffffff 100%);
     padding: 32px 32px 36px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     border-radius: 18px;
     border: 1px solid #ebe6db;
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+
+      .user-name {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .logout-btn {
+        background: #fff !important;
+        border: 1px solid #d9d9d9 !important;
+        color: #666 !important;
+      }
+    }
 
     .page-title {
       color: #2b2f36;
@@ -77,6 +102,12 @@
       &.rejected {
         .stats-count {
           color: #ff4d4f;
+        }
+      }
+
+      &.offline {
+        .stats-count {
+          color: #999;
         }
       }
     }
@@ -151,6 +182,11 @@
 
       &.rejected {
         border-left: 4px solid #ff4d4f;
+      }
+
+      &.offline {
+        border-left: 4px solid #999;
+        opacity: 0.8;
       }
 
       .hotel-image {
@@ -261,6 +297,11 @@
         .offline-btn {
           background: #fa8c16 !important;
           border-color: #fa8c16 !important;
+        }
+
+        .online-btn {
+          background: #52c41a !important;
+          border-color: #52c41a !important;
         }
       }
     }

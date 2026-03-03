@@ -5,7 +5,8 @@ import Taro from '@tarojs/taro'
 import Calendar from '../../../components/Calendar'
 import { useHotelStore } from '../../../shared/store/useHotelStore'
 import { hotelService } from '../../../shared/services/hotelService'
-import { IHotel } from '../../../shared/types/hotel'
+import { IHotel } from '../../../shared/types'
+import { calculateRoomPrice } from '../../../shared/utils/priceCalculator'
 
 import './index.scss'
 
@@ -101,13 +102,22 @@ const Booking = () => {
         return rooms[idx]
     }, [hotel, selectedRoomIndex])
 
-    // 单价：优先房型价（如果有 rooms），否则用 hotel.price
+    // 单价：优先房型价（如果有 rooms），并使用动态价格计算
     const unitPrice = useMemo(() => {
-        if (selectedRoom && Number.isFinite(Number(selectedRoom.price))) {
-            return Number(selectedRoom.price)
+        if (!hotel) return 0;
+        
+        const basePrice = selectedRoom && Number.isFinite(Number(selectedRoom.price)) 
+            ? Number(selectedRoom.price) 
+            : Number(hotel.price);
+        
+        // 如果有入住日期，计算动态价格
+        if (startDate && hotel.priceConfig) {
+            const priceInfo = calculateRoomPrice(basePrice, startDate, hotel.priceConfig);
+            return priceInfo.price;
         }
-        return hotel ? Number(hotel.price) : 0
-    }, [hotel, selectedRoom])
+        
+        return basePrice;
+    }, [hotel, selectedRoom, startDate]);
 
     const totalPrice = useMemo(() => {
         if (!unitPrice || !nights) return 0

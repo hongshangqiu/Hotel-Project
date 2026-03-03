@@ -2,11 +2,26 @@ import { PropsWithChildren, useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import Layout from './components/Layout'
 import { useStore } from './shared/store'
+import { hotelService } from './shared/services/hotelService'
+import { LocalStorage, STORAGE_KEYS } from './shared/utils/LocalStorage'
+import { PRESET_MERCHANTS } from './shared/constants'
 import './app.scss'
 
 function App({ children }: PropsWithChildren<any>) {
   const { isLogin, isPC, setDevice, user } = useStore()
   const [initialized, setInitialized] = useState(false)
+
+  // 0. 启动时确保 Mock 数据已初始化（酒店数据 + 商户数据）
+  useEffect(() => {
+    // 预加载酒店数据，确保 Mock 数据被初始化到 LocalStorage
+    hotelService.getHotelsByPage(1, 1).catch(() => {});
+
+    // 初始化预设商户账号
+    const users = LocalStorage.get<any[]>(STORAGE_KEYS.USER_LIST) || []
+    if (users.length === 0) {
+      LocalStorage.set(STORAGE_KEYS.USER_LIST, PRESET_MERCHANTS)
+    }
+  }, []);
 
   // 1. 启动时检测设备类型并自动跳转
   useEffect(() => {
@@ -29,12 +44,12 @@ function App({ children }: PropsWithChildren<any>) {
       // PC端：未登录跳转到登录页，已登录跳转到管理后台
       if (!isLogin) {
         if (!currentRoute.includes('login')) {
-          Taro.redirectTo({ url: '/pages/admin/login/index' })
+          Taro.reLaunch({ url: '/pages/admin/login/index' })
         }
       } else {
         // 已登录，确保在管理端页面
         if (!currentRoute.includes('admin')) {
-          Taro.reLaunch({ url: '/pages/admin/manage/index' })
+          Taro.reLaunch({ url: '/pages/admin/merchant/index' })
         }
       }
     } else {
@@ -47,7 +62,39 @@ function App({ children }: PropsWithChildren<any>) {
     setInitialized(true)
   }, [initialized, isLogin, setDevice])
 
-  // 2. PC端已登录：使用 Layout 包裹管理端页面
+  // 2. 管理端页面登录状态检查（每次路由变化时执行）
+  useEffect(() => {
+    // 等待初始化完成
+    if (!initialized) return
+
+    const pages = Taro.getCurrentPages()
+    const currentPage = pages[pages.length - 1]
+    const currentRoute = currentPage?.route || ''
+
+    // 检查是否是管理端页面（非登录/注册页）
+    const isAdminPage = currentRoute.includes('admin') && 
+      !currentRoute.includes('login') && 
+      !currentRoute.includes('register')
+
+    // 如果是管理端页面但未登录，重定向到登录页
+    if (isAdminPage && !isLogin) {
+      Taro.reLaunch({ url: '/pages/admin/login/index' })
+      return
+    }
+
+    // 如果已登录但访问登录/注册页，重定向到对应后台
+    if (isLogin && user) {
+      if (currentRoute.includes('login') || currentRoute.includes('register')) {
+        if (user.role === 'ADMIN') {
+          Taro.reLaunch({ url: '/pages/admin/audit/index' })
+        } else {
+          Taro.reLaunch({ url: '/pages/admin/merchant/index' })
+        }
+      }
+    }
+  }, [initialized, isLogin, user])
+
+  // 3. PC端已登录：使用 Layout 包裹管理端页面
   if (isPC && isLogin && user) {
     // 管理端页面需要 Layout 包裹
     const pages = Taro.getCurrentPages()
@@ -61,7 +108,7 @@ function App({ children }: PropsWithChildren<any>) {
     }
   }
 
-  // 3. 登录页和其他页面直接显示
+  // 4. 登录页和其他页面直接显示
   return <>{children}</>
 }
 

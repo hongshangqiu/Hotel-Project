@@ -21,5 +21,11 @@ export default defineAppConfig({
     navigationBarBackgroundColor: '#fff',
     navigationBarTitleText: '逸宿酒店管理',
     navigationBarTextStyle: 'black'
-  }
+  },
+  permission: {
+    'scope.userLocation': {
+      desc: '用于获取您的位置以便自动填写酒店地址'
+    }
+  },
+  requiredPrivateInfos: ['getLocation']
 })

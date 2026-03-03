@@ -6,25 +6,17 @@ import { IHotel } from '../../../shared/types';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import { useHotelStore } from '../../../shared/store/useHotelStore';
 import { useEnvironment } from '../../../shared/utils/useEnvironment';
+import { TAG_OPTIONS, STAR_OPTIONS, PRICE_OPTIONS, QQ_MAP_KEY } from '../../../shared/constants';
 import Calendar from '../../../components/Calendar/index';
 import './index.scss';
 
 const Index = () => {
   const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore();
   const { isPC } = useEnvironment();
-    const QQ_MAP_KEY = 'AWBBZ-HTZKV-NGKPK-5U2CL-EK6WH-P6FIT';
   const [bannerHotels, setBannerHotels] = useState<IHotel[]>([]);
   const [filterVisible, setFilterVisible] = useState(false);
   const [selectedStars, setSelectedStars] = useState<number[]>(searchParams.stars || []);
   const [selectedPriceRange, setSelectedPriceRange] = useState<[number, number] | undefined>(searchParams.priceRange);
-
-  const TAG_OPTIONS = ['亲子', '豪华', '免费停车场', '近地铁', '商务', '江景', '健身房', '泳池'];
-  const STAR_OPTIONS = [5, 4, 3, 2, 1];
-  const PRICE_OPTIONS = [
-    { label: '¥0–500', value: [0, 500] as [number, number] },
-    { label: '¥500–800', value: [500, 800] as [number, number] },
-    { label: '¥800+', value: [800, 9999] as [number, number] },
-  ];
 
   useEffect(() => {
     hotelService.getHotelsByPage(1, 3).then((res) => {
@@ -62,7 +54,91 @@ const Index = () => {
     });
   };
 
-  const handleLocate = () => {
+  const handleLocate = async () => {
+    // 调试信息
+    console.log('定位开始', typeof navigator, !!navigator.geolocation);
+    
+    // 优先使用浏览器原生定位 API (H5 环境)
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      console.log('使用浏览器定位');
+      // 浏览器定位会弹出授权提示
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const baseUrl = `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${QQ_MAP_KEY}&get_poi=0`;
+          const jsonp = (url: string) => new Promise<any>((resolve, reject) => {
+            const callbackName = `__qqmap_cb_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const script = document.createElement('script');
+            (window as any)[callbackName] = (data: any) => {
+              resolve(data);
+              delete (window as any)[callbackName];
+              script.remove();
+            };
+            script.onerror = () => {
+              reject(new Error('jsonp failed'));
+              delete (window as any)[callbackName];
+              script.remove();
+            };
+            script.src = `${url}&output=jsonp&callback=${callbackName}`;
+            document.body.appendChild(script);
+          });
+
+          jsonp(baseUrl).then((resp: any) => {
+            const city = resp?.result?.address_component?.city;
+            if (city) {
+              setSearchParams({ city });
+              Taro.showToast({ title: '定位成功', icon: 'success' });
+              return;
+            }
+            Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
+          }).catch(() => {
+            Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
+          });
+        },
+        (error) => {
+          let msg = '定位失败，请检查权限';
+          if (error.code === 1) {
+            msg = '已拒绝定位权限，请在浏览器设置中允许定位';
+          } else if (error.code === 2) {
+            msg = '无法获取位置，请检查定位服务';
+          } else if (error.code === 3) {
+            msg = '定位超时，请稍后重试';
+          }
+          Taro.showToast({ title: msg, icon: 'none', duration: 3000 });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+      return;
+    }
+    
+    // 小程序环境 - 先检查定位权限状态
+    console.log('使用小程序定位');
+    try {
+      const settingRes = await Taro.getSetting();
+      const authSetting = settingRes.authSetting;
+      
+      // 如果没有定位权限，发起授权请求
+      if (!authSetting['scope.userLocation']) {
+        await Taro.authorize({
+          scope: 'scope.userLocation'
+        });
+      }
+    } catch (authError) {
+      // 用户拒绝授权，引导用户手动打开设置
+      const res = await Taro.showModal({
+        title: '需要定位权限',
+        content: '定位功能需要您的授权才能使用，是否前往设置页面开启？',
+        confirmText: '去设置',
+        cancelText: '取消'
+      });
+      
+      if (res.confirm) {
+        await Taro.openSetting();
+      }
+      return;
+    }
+
+    // 权限获取成功，开始定位
     Taro.getLocation({
       type: 'wgs84',
       success: async (res) => {
@@ -98,8 +174,18 @@ const Index = () => {
           Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
         }
       },
-      fail: () => {
-        Taro.showToast({ title: '定位失败，请检查权限', icon: 'none' });
+      fail: async () => {
+        // 定位失败，引导用户去设置页面
+        const res = await Taro.showModal({
+          title: '定位失败',
+          content: '无法获取您的位置信息，是否前往设置页面开启定位权限？',
+          confirmText: '去设置',
+          cancelText: '取消'
+        });
+        
+        if (res.confirm) {
+          await Taro.openSetting();
+        }
       }
     });
   };

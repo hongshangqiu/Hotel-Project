@@ -5,19 +5,70 @@ import { Button, Input } from '@nutui/nutui-react-taro'
 import { useStore } from '@/shared/store'
 import { UserRole } from '@/shared/types'
 import { LocalStorage, STORAGE_KEYS } from '@/shared/utils/LocalStorage'
+import { ADMIN_ACCOUNTS } from '@/shared/constants'
 import './index.scss'
-
-// 预设管理员账号
-const ADMIN_ACCOUNTS = [
-  { username: 'admin', password: '123456' },
-  { username: 'manager', password: '666666' },
-]
 
 const Login = () => {
   const { login } = useStore()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errorCount, setErrorCount] = useState(0)
+  const [lockEndTime, setLockEndTime] = useState<number | null>(null)
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({})
+
+  // 最大错误次数
+  const MAX_ERROR_COUNT = 5
+  // 锁定时间（毫秒）- 30秒
+  const LOCK_DURATION = 30 * 1000
+
+  // 检查是否被锁定
+  const isLocked = () => {
+    if (!lockEndTime) return false
+    if (Date.now() >= lockEndTime) {
+      setLockEndTime(null)
+      setErrorCount(0)
+      return false
+    }
+    return true
+  }
+
+  // 表单输入验证
+  const validateInput = (): boolean => {
+    const newErrors: { username?: string; password?: string } = {}
+    let isValid = true
+
+    // 去除首尾空格后的值
+    const trimmedUsername = username.trim()
+    const trimmedPassword = password.trim()
+
+    // 账号验证
+    if (!trimmedUsername) {
+      newErrors.username = '请输入账号'
+      isValid = false
+    } else if (trimmedUsername.length < 3) {
+      newErrors.username = '账号至少3个字符'
+      isValid = false
+    } else if (/[\s<>'"\\]/.test(trimmedUsername)) {
+      newErrors.username = '账号不能包含空格或特殊字符'
+      isValid = false
+    }
+
+    // 密码验证
+    if (!trimmedPassword) {
+      newErrors.password = '请输入密码'
+      isValid = false
+    } else if (trimmedPassword.length < 6) {
+      newErrors.password = '密码至少6个字符'
+      isValid = false
+    } else if (/[\s<>'"\\]/.test(trimmedPassword)) {
+      newErrors.password = '密码不能包含空格或特殊字符'
+      isValid = false
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
 
   // 自动根据账号判断角色
   const detectRole = (name: string): UserRole => {
@@ -49,11 +100,11 @@ const Login = () => {
     
     // 商户验证 - 检查本地存储的注册用户
     const users = LocalStorage.get<any[]>(STORAGE_KEYS.USER_LIST) || []
-    const user = users.find(u => u.username === name && u.password === pwd)
+    const user = users.find(u => u.username.toLowerCase() === name.toLowerCase() && u.password === pwd)
     
     if (!user) {
       // 检查是否是已注册用户但密码错误
-      const existingUser = users.find(u => u.username === name)
+      const existingUser = users.find(u => u.username.toLowerCase() === name.toLowerCase())
       if (existingUser) {
         return { valid: false, role, error: '密码错误' }
       }
@@ -65,29 +116,56 @@ const Login = () => {
   }
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      Taro.showToast({ title: '请输入账号和密码', icon: 'none' })
+    // 检查是否被锁定
+    if (isLocked()) {
+      const remainingTime = Math.ceil((lockEndTime! - Date.now()) / 1000)
+      Taro.showToast({ title: `账号已锁定，请${remainingTime}分钟后再试`, icon: 'none' })
       return
     }
+
+    // 表单验证
+    if (!validateInput()) {
+      return
+    }
+
+    // 去除空格
+    const trimmedUsername = username.trim()
+    const trimmedPassword = password.trim()
 
     setLoading(true)
 
     try {
-      const result = validateLogin(username, password)
-      
+      const result = validateLogin(trimmedUsername, trimmedPassword)
+
       if (!result.valid) {
         setLoading(false)
-        Taro.showToast({ title: result.error || '登录失败', icon: 'none' })
+        // 登录失败，错误次数+1
+        const newErrorCount = errorCount + 1
+        setErrorCount(newErrorCount)
+
+        if (newErrorCount >= MAX_ERROR_COUNT) {
+          // 达到最大错误次数，锁定账号
+          const lockTime = Date.now() + LOCK_DURATION
+          setLockEndTime(lockTime)
+          Taro.showToast({ title: `登录错误次数过多，账号已锁定${LOCK_DURATION / 1000}秒`, icon: 'none' })
+        } else {
+          const remaining = MAX_ERROR_COUNT - newErrorCount
+          Taro.showToast({ title: `${result.error || '登录失败'}，还能尝试${remaining}次`, icon: 'none' })
+        }
         return
       }
 
+      // 登录成功，重置错误计数
+      setErrorCount(0)
+      setLockEndTime(null)
+
       const user = {
-        id: username.toLowerCase() === 'admin' ? '0' : Date.now().toString(),
-        username,
+        id: trimmedUsername.toLowerCase() === 'admin' ? '0' : Date.now().toString(),
+        username: trimmedUsername,
         role: result.role,
         token: 'mock-token'
       }
-      
+
       login(user)
       Taro.showToast({ title: '登录成功', icon: 'success' })
 
@@ -131,39 +209,62 @@ const Login = () => {
         <View className='form-card'>
           <Text className='form-title'>账号登录</Text>
 
-          <View className='form-item'>
+        <View className='form-item'>
             <View className='input-wrapper'>
-              <Input
-                className='input'
-                type='text'
-                placeholder='请输入账号'
-                value={username}
-                onChange={(val) => setUsername(val)}
-              />
+          <Input
+            className={`input ${errors.username ? 'input-error' : ''}`}
+            type='text'
+            placeholder='请输入账号'
+            value={username}
+            disabled={loading || isLocked()}
+            onChange={(val) => {
+              setUsername(val)
+              setErrors(prev => ({ ...prev, username: undefined }))
+            }}
+          />
             </View>
-          </View>
+            {errors.username && <Text className='error-text'>{errors.username}</Text>}
+        </View>
 
-          <View className='form-item'>
+        <View className='form-item'>
             <View className='input-wrapper'>
-              <Input
-                className='input'
-                type='password'
-                placeholder='请输入密码'
-                value={password}
-                onChange={(val) => setPassword(val)}
-              />
-            </View>
+          <Input
+            className={`input ${errors.password ? 'input-error' : ''}`}
+            type='password'
+            placeholder='请输入密码'
+            value={password}
+            disabled={loading || isLocked()}
+            onChange={(val) => {
+              setPassword(val)
+              setErrors(prev => ({ ...prev, password: undefined }))
+            }}
+          />
           </View>
+            {errors.password && <Text className='error-text'>{errors.password}</Text>}
+        </View>
 
-          <Button
-            type='primary'
-            block
-            loading={loading}
-            onClick={handleLogin}
-            className='login-btn'
-          >
+        {lockEndTime && isLocked() && (
+          <View className='lock-tip'>
+            <Text className='lock-text'>账号已锁定，剩余 {Math.ceil((lockEndTime - Date.now()) / 1000)} 秒</Text>
+          </View>
+        )}
+
+        {errorCount > 0 && errorCount < MAX_ERROR_COUNT && (
+          <View className='error-count-tip'>
+            <Text className='count-text'>密码错误，还能尝试 {MAX_ERROR_COUNT - errorCount} 次</Text>
+          </View>
+        )}
+
+        <Button
+          type='primary'
+          block
+          loading={loading}
+          disabled={isLocked()}
+          onClick={handleLogin}
+          className='login-btn'
+        >
             {loading ? '登录中...' : '登录'}
-          </Button>
+        </Button>
         </View>
 
         <View className='register-link'>

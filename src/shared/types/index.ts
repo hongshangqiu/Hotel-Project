@@ -36,9 +36,38 @@ export interface IHotel {
   rejectionReason?: string;
   nearbyIntro?: string;
   tags?: string[];
-  description?: string; // 从 index.ts 补充
-  rating?: number; // 从 index.ts 补充
-  images?: string[]; // 从 index.ts 补充
+  description?: string;
+  rating?: number;
+  images?: string[];
+  // 价格调整配置
+  priceConfig?: IPriceConfig;
+}
+
+// 价格调整配置
+export interface IPriceConfig {
+  // 周末价格调整：1.1 表示加价10%，0.9 表示降价10%
+  weekendMultiplier?: number;
+  // 节假日价格调整
+  holidayMultiplier?: number;
+  // 固定日期价格调整（优先级最高）
+  datePriceOverrides?: IDatePriceOverride[];
+  // 淡旺季配置
+  seasons?: ISeasonPrice[];
+}
+
+// 指定日期的价格覆盖
+export interface IDatePriceOverride {
+  date: string; // 格式：YYYY-MM-DD
+  multiplier?: number; // 倍数
+  fixedPrice?: number; // 固定价格（优先级高于 multiplier）
+}
+
+// 淡旺季配置
+export interface ISeasonPrice {
+  name: string; // 季节名称
+  startMonth: number; // 开始月份 1-12
+  endMonth: number; // 结束月份 1-12
+  multiplier?: number; // 价格倍数
 }
 
 // 用户角色枚举

@@ -2,20 +2,20 @@ import { View, Text, Image, ScrollView, Swiper, SwiperItem } from '@tarojs/compo
 import Taro from '@tarojs/taro';
 import { useEffect, useMemo, useState } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
-import { IHotel } from '../../../shared/types/hotel';
+import { IHotel } from '../../../shared/types';
 import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
 import { useHotelStore } from '../../../shared/store/useHotelStore';
+import { calculateRoomPrice, calculateHotelMinPrice } from '../../../shared/utils/priceCalculator';
 import Calendar from '../../../components/Calendar/index';
+import StarRating from '../../../components/StarRating';
 import './index.scss';
 
 type NavKey = 'room' | 'detail';
 
 const HotelDetail = () => {
   const [hotel, setHotel] = useState<IHotel | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
 
   const [activeNav, setActiveNav] = useState<NavKey>('detail');
-  const [scrollIntoView, setScrollIntoView] = useState<string>('section-room');
 
   const hotelId = useMemo(() => {
     const inst = Taro.getCurrentInstance();
@@ -32,6 +32,19 @@ const HotelDetail = () => {
     return Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)))
   }, [searchParams.startDate, searchParams.endDate])
 
+  // 计算酒店起价（动态价格）
+  const minPriceInfo = useMemo(() => {
+    if (!hotel) return { price: 0, isAdjusted: false, reason: '' };
+    return calculateHotelMinPrice(hotel, searchParams.startDate, searchParams.endDate);
+  }, [hotel, searchParams.startDate, searchParams.endDate]);
+
+  // 计算指定房型的动态价格
+  const getRoomPriceInfo = (roomPrice: number, date?: string) => {
+    if (!hotel || !date) {
+      return { price: roomPrice, isAdjusted: false, reason: '' };
+    }
+    return calculateRoomPrice(roomPrice, date, hotel.priceConfig);
+  };
 
   const openMap = (address) => {
     const url = `https://apis.map.qq.com/uri/v1/search?keyword=${encodeURIComponent(address)}&referer=myapp`;
@@ -56,18 +69,13 @@ const HotelDetail = () => {
       return anyHotel.imageUrl.filter(Boolean);
     }
 
-    if (typeof hotel.imageUrl === 'string' && hotel.imageUrl) {
+    if (hotel && typeof hotel.imageUrl === 'string' && hotel.imageUrl) {
       return [hotel.imageUrl];
     }
     return [];
   }, [hotel]);
 
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-
-  const handleViewRooms = () => {
-    setActiveNav('room');
-    setActiveRoomId(null);
-  };
 
   const handleBack = () => {
     const pages = Taro.getCurrentPages();
@@ -81,7 +89,6 @@ const HotelDetail = () => {
 
   const scrollTo = (key: NavKey) => {
     setActiveNav(key);
-    setScrollIntoView(`section-${key}`);
   };
 
 
@@ -91,15 +98,12 @@ const HotelDetail = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const res: IHotel = await (hotelService as any).getHotelById(id);
       setHotel(res);
     } catch (e: any) {
       Taro.showToast({ title: e?.message || '酒店加载失败', icon: 'none' });
       setHotel(null);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -178,7 +182,7 @@ const HotelDetail = () => {
           <View className='hotel-header'>
             <View className='hotel-title-row'>
               <Text className='hotel-name'>{hotel?.nameCn || '-'}</Text>
-              <Text className='hotel-star'>{hotel ? `${hotel.star}星` : ''}</Text>
+              <Text className='hotel-star'><StarRating rating={Number(hotel?.star) || 0} size="medium" /></Text>
             </View>
 
             <Text className='hotel-enname'>{hotel?.nameEn || '-'}</Text>
@@ -240,8 +244,10 @@ const HotelDetail = () => {
               <View className='detail-line'>英文名：{hotel?.nameEn || '-'}</View>
               <View className='detail-line'>开业时间：{hotel?.openingTime || '-'}</View>
               <View className='detail-line'>地址：{hotel?.address || '-'}</View>
-              <View className='detail-line'>星级：{hotel ? `${hotel.star}星` : '-'}</View>
-              <View className='detail-line'>起价：¥{hotel?.price ?? '-'}</View>
+              <View className='detail-line'>星级：<StarRating rating={Number(hotel?.star) || 0} size="small" /></View>
+              <View className='detail-line'>
+                起价：<Text className='detail-price'>¥{minPriceInfo.price}</Text>
+              </View>
             </View>
           </View>
         )}
@@ -255,6 +261,22 @@ const HotelDetail = () => {
 
             {hotel?.rooms?.map(room => {
               const expanded = activeRoomId === room.id;
+              // 计算房型动态价格（用户端只显示最终价格）
+              const roomPriceInfo = getRoomPriceInfo(room.price, searchParams.startDate);
+
+              const handleBook = () => {
+                // 直接在当前页面显示预订成功
+                const hotelName = hotel?.nameCn || '未知酒店';
+                const roomName = room.name;
+                const price = roomPriceInfo.price;
+                
+                Taro.showModal({
+                  title: '预定成功',
+                  content: `酒店：${hotelName}\n房型：${roomName}\n价格：¥${price}`,
+                  showCancel: false,
+                  confirmText: '知道了'
+                });
+              };
 
               return (
                 <View key={room.id} className='room-card'>
@@ -267,7 +289,15 @@ const HotelDetail = () => {
                       <Text className='room-meta'>
                         {room.size} · 可住 {room.capacity} 人 · {room.bedType}
                       </Text>
-                      <Text className='room-price'>¥{room.price}</Text>
+                      <Text className='room-price'>¥{roomPriceInfo.price}</Text>
+
+                      {/* 预定按钮 - 直接显示，不需要展开 */}
+                      <View
+                        className='room-book-btn-inline'
+                        onClick={handleBook}
+                      >
+                        <Text className='room-book-text'>预定</Text>
+                      </View>
 
                       {/* 展开按钮*/}
                       <Text
@@ -285,15 +315,6 @@ const HotelDetail = () => {
                   <View className={`room-detail ${expanded ? 'open' : ''}`}>
                     <View className='room-detail-inner'>
                       <Text className='room-policy'>{room.policy}</Text>
-
-                      <View
-                        className='room-book-btn'
-                        onClick={() =>
-                          Taro.navigateTo({ url: `/pages/user/booking/index?id=${hotelId}&roomId=${room.id}` })
-                        }
-                      >
-                        <Text className='room-book-text'>预定</Text>
-                      </View>
                     </View>
                   </View>
                 </View>
@@ -308,12 +329,22 @@ const HotelDetail = () => {
       <View className='footer-bar'>
         <View className='footer-left'>
           <Text className='price-unit'>
-            ¥{hotel?.price ?? '-'} 起
+            ¥{minPriceInfo.price} 起
           </Text>
         </View>
 
-        <View className='footer-book-btn' onClick={handleViewRooms}>
-          <Text className='action-btn-text'>查看可订房型</Text>
+        <View 
+          className='footer-book-btn' 
+          onClick={() => {
+             Taro.showModal({
+              title: '预定成功',
+              content: `酒店：${hotel?.nameCn || '未知酒店'}\n价格：¥${minPriceInfo.price}起`,
+              showCancel: false,
+              confirmText: '知道了'
+            });
+          }}
+        >
+          <Text className='action-btn-text'>立即预定</Text>
         </View>
       </View>
 

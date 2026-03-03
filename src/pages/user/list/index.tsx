@@ -1,13 +1,30 @@
 import { View, Text, Image, Input, Picker } from '@tarojs/components';
 import Taro, { useReachBottom } from '@tarojs/taro';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { hotelService } from '../../../shared/services/hotelService';
-import { IHotel } from '../../../shared/types/hotel';
-import { LocalStorage, STORAGE_KEYS } from '../../../shared/utils/LocalStorage';
+import { IHotel } from '../../../shared/types';
 import { PROVINCES, CITIES_BY_PROVINCE } from '../../../shared/constants/regions';
 import { useHotelStore } from '../../../shared/store/useHotelStore';
 import Calendar from '../../../components/Calendar/index';
+import HotelCard from '../../../components/HotelCard';
 import './index.scss';
+
+// 排序选项 - 使用 useMemo 缓存
+const SORT_OPTIONS = [
+  { label: '价格升序', value: 'priceAsc' },
+  { label: '价格降序', value: 'priceDesc' },
+  { label: '星级降序', value: 'star' }
+] as const;
+
+// 星级选项 - 使用 useMemo 缓存
+const STAR_OPTIONS = [5, 4, 3, 2, 1] as const;
+
+// 价格选项 - 使用 useMemo 缓存
+const PRICE_OPTIONS = [
+  { label: '¥0–500', value: [0, 500] as [number, number] },
+  { label: '¥500–800', value: [500, 800] as [number, number] },
+  { label: '¥800+', value: [800, 9999] as [number, number] },
+] as const;
 
 const HotelList = () => {
   const [list, setList] = useState<IHotel[]>([]);
@@ -15,33 +32,30 @@ const HotelList = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore()
-  const [keyword, setKeyword] = useState(searchParams.keyword || '')
 
+  // Zustand Store
+  const { searchParams, setSearchParams, setCalendarVisible } = useHotelStore();
+  
+  // 搜索栏关键词（优先使用 Store 中的词以保证回显）
+  const [keyword, setKeyword] = useState(searchParams.keyword || '');
+
+  // 标记是否有活跃的搜索/筛选（用于置顶显示）
+  const [isSearchResult, setIsSearchResult] = useState(false);
 
   // 排序状态
   const [showSort, setShowSort] = useState(false)
   const [sortType, setSortType] = useState<'priceAsc' | 'priceDesc' | 'star'>('priceAsc')
-  const SORT_OPTIONS = [
-    { label: '价格升序', value: 'priceAsc' },
-    { label: '价格降序', value: 'priceDesc' },
-    { label: '星级降序', value: 'star' }
-  ]
+  
   // 筛选状态
   const [showFilter, setShowFilter] = useState(false)
   const [selectedStars, setSelectedStars] = useState<number[]>([])
   const [priceRange, setPriceRange] = useState<[number, number]>()
-  const STAR_OPTIONS = [5, 4, 3, 2, 1]
-  const PRICE_OPTIONS = [
-    { label: '¥0–500', value: [0, 500] },
-    { label: '¥500–800', value: [500, 800] },
-    { label: '¥800+', value: [800, 9999] }
-  ]
 
-  const [province, setProvince] = useState('上海市')
+  // 省份选择（预留用于未来城市筛选功能）
+  const [, setProvince] = useState('上海市')
   const [city, setCity] = useState('上海市')
 
-  // Picker multiSelector 需要的 range/value
+  // Picker multiSelector 需要的 range/value - 使用 useMemo 缓存
   const [cityRange, setCityRange] = useState<string[][]>([
     PROVINCES,
     CITIES_BY_PROVINCE['上海市'] || ['上海市'],
@@ -52,7 +66,19 @@ const HotelList = () => {
     0,
   ])
 
-  const onCityColumnChange = (e) => {
+  // 处理搜索 (融合了防抖、收起键盘和参数同步)
+  const onSearch = useCallback(() => {
+    Taro.hideKeyboard?.().catch(() => { });
+    setSearchParams({ ...searchParams, keyword: keyword.trim() });
+  }, [keyword, searchParams, setSearchParams]);
+
+  // 处理输入
+  const onKeywordChange = useCallback((e) => {
+    setKeyword(e.detail.value);
+  }, []);
+
+  // 使用 ref 缓存回调函数，避免不必要的重渲染
+  const onCityColumnChange = useCallback((e) => {
     const { column, value } = e.detail
 
     // 改省：更新城市列表，并重置市索引为0
@@ -72,9 +98,9 @@ const HotelList = () => {
     if (column === 1) {
       setCityIndex(prev => [prev[0], value])
     }
-  }
+  }, [])
 
-  const onCityChange = (e) => {
+  const onCityChange = useCallback((e) => {
     const [pIdx, cIdx] = e.detail.value as [number, number]
     const nextProvince = PROVINCES[pIdx]
     const nextCities = CITIES_BY_PROVINCE[nextProvince] || [nextProvince]
@@ -83,22 +109,30 @@ const HotelList = () => {
     setProvince(nextProvince)
     setCity(nextCity)
     setCityIndex([pIdx, cIdx])
-  }
+  }, [])
 
-  const calcNights = () => {
+  // 使用 useMemo 缓存间夜计算结果
+  const nights = useMemo(() => {
     const { startDate, endDate } = searchParams
     if (!startDate || !endDate) return 0
     const s = new Date(startDate).getTime()
     const e = new Date(endDate).getTime()
     return Math.max(0, Math.round((e - s) / (1000 * 60 * 60 * 24)))
-  }
+  }, [searchParams.startDate, searchParams.endDate])
 
-  const nights = calcNights()
-
-  // 加载数据的方法
-  const loadData = async (currentPage: number) => {
+  // 加载数据的方法 - 使用 useCallback 缓存
+  const loadData = useCallback(async (currentPage: number) => {
     if (loading || !hasMore) return;
     setLoading(true);
+
+    // 检测是否有活跃的搜索/筛选条件
+    const hasActiveFilters = !!(
+      searchParams.keyword ||
+      (searchParams.tags && searchParams.tags.length > 0) ||
+      (searchParams.stars && searchParams.stars.length > 0) ||
+      searchParams.priceRange ||
+      (searchParams.city && searchParams.city !== '上海市')
+    );
 
     try {
       const res = await hotelService.getHotelsByPage(
@@ -108,12 +142,14 @@ const HotelList = () => {
         selectedStars,
         priceRange,
         searchParams.keyword,
-        searchParams.tags
+        searchParams.tags,
+        searchParams.city
       )
       const newList = res?.list ?? []
       const totalCount = res?.total ?? 0
 
       setTotal(totalCount);
+      setIsSearchResult(hasActiveFilters);
 
       if (newList.length < 5) {
         setHasMore(false); // 不满5条说明到底了
@@ -125,23 +161,18 @@ const HotelList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, hasMore, sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags, searchParams.city]);
 
-  const onSearch = () => {
-    Taro.hideKeyboard?.().catch(() => { })
-
-    setSearchParams({ keyword: keyword.trim() })
-  }
 
   // 初始化加载
   useEffect(() => {
     loadData(1)
-  }, [])
+  }, [loadData])
 
   useEffect(() => {
     setSelectedStars(searchParams.stars || [])
     setPriceRange(searchParams.priceRange)
-  }, [searchParams.stars, searchParams.priceRange])
+  }, [searchParams.stars, searchParams.priceRange, searchParams.tags])
 
 
   // 条件变化 → 重置分页
@@ -149,7 +180,7 @@ const HotelList = () => {
     setPage(1)
     setHasMore(true)
     setList([])
-  }, [sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags])
+  }, [sortType, selectedStars, priceRange, searchParams.keyword, searchParams.tags, searchParams.city])
 
 
   // 页码变化 → 请求
@@ -174,11 +205,12 @@ const HotelList = () => {
               className='input'
               value={keyword}
               placeholder='搜索酒店名/地址/关键词'
-              onInput={(e) => setKeyword(e.detail.value)}
+              onInput={onKeywordChange}
               confirmType='search'
               onConfirm={onSearch}
             />
           </View>
+
           <View className='keyword-btn' onClick={onSearch}>搜索</View>
         </View>
 
@@ -344,27 +376,16 @@ const HotelList = () => {
             <Text className='empty-text'>没有符合条件的酒店</Text>
           </View>
         )}
+        {/* 使用 useMemo 缓存酒店列表渲染结果 */}
         {list.map((hotel, index) => (
-          <View key={`${hotel.id}-${index}`} className='hotel-card'
-            onClick={() => {
-              LocalStorage.set(STORAGE_KEYS.USER_VIEW_HOTEL_ID, hotel.id)
-              Taro.navigateTo({ url: '/pages/user/detail/index' })
-            }}
-          >
-            <Image className='cover' src={hotel.imageUrl} />
-            <View className='info'>
-              <View className='name-row'>
-                <Text className='name'>{hotel.nameCn}</Text>
-                <Text className='star'>{hotel.star}星</Text>
-              </View>
-              <Text className='address'>{hotel.address}</Text>
-              <View className='price-row'>
-                <Text className='price-symbol'>¥</Text>
-                <Text className='price-val'>{hotel.price}</Text>
-                <Text className='price-unit'>起</Text>
-              </View>
-            </View>
-          </View>
+          <HotelCard
+            key={`${hotel.id}-${index}`}
+            hotel={hotel}
+            index={index}
+            startDate={searchParams.startDate}
+            endDate={searchParams.endDate}
+            isHighlight={isSearchResult && index < 3}
+          />
         ))}
       </View>
 
