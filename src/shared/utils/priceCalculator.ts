@@ -46,7 +46,7 @@ export const isHoliday = (dateStr: string): boolean => {
     '10-01', // 国庆
   ];
   
-  const monthDay = `${month.toString().padStart(2, '0')}-${day.toString().PadStart(2, '0')}`;
+  const monthDay = `${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   return holidayDates.includes(monthDay);
 };
 
@@ -167,7 +167,17 @@ export const calculateHotelMinPrice = (
   checkOutDate?: string
 ): { price: number; isAdjusted: boolean; reason: string } => {
   const config = hotel.priceConfig;
-  const basePrice = hotel.price;
+  
+  // 获取酒店最低价：优先使用房型中的最低价，其次使用酒店基础价格
+  let basePrice = hotel.price;
+  if (hotel.rooms && hotel.rooms.length > 0) {
+    const roomPrices = hotel.rooms
+      .map(room => Number(room.price))
+      .filter(price => Number.isFinite(price));
+    if (roomPrices.length > 0) {
+      basePrice = Math.min(...roomPrices);
+    }
+  }
   
   // 如果有入住日期，计算日期范围内的最低价
   if (checkInDate && checkOutDate) {

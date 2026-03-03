@@ -54,7 +54,92 @@ const Index = () => {
     });
   };
 
-  const handleLocate = () => {
+  const handleLocate = async () => {
+    // 调试信息
+    console.log('定位开始', typeof navigator, !!navigator.geolocation);
+    
+    // 优先使用浏览器原生定位 API (H5 环境)
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      console.log('使用浏览器定位');
+      // 浏览器定位会弹出授权提示
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const baseUrl = `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=${QQ_MAP_KEY}&get_poi=0`;
+            const jsonp = (url: string) => new Promise<any>((resolve, reject) => {
+              const callbackName = `__qqmap_cb_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+              const script = document.createElement('script');
+              (window as any)[callbackName] = (data: any) => {
+                resolve(data);
+                delete (window as any)[callbackName];
+                script.remove();
+              };
+              script.onerror = () => {
+                reject(new Error('jsonp failed'));
+                delete (window as any)[callbackName];
+                script.remove();
+              };
+              script.src = `${url}&output=jsonp&callback=${callbackName}`;
+              document.body.appendChild(script);
+            });
+
+            const resp = await jsonp(baseUrl);
+            const city = resp?.result?.address_component?.city;
+            if (city) {
+              setSearchParams({ city });
+              Taro.showToast({ title: '定位成功', icon: 'success' });
+              return;
+            }
+            throw new Error('no city');
+          } catch {
+            Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
+          }
+        },
+        (error) => {
+          let msg = '定位失败，请检查权限';
+          if (error.code === 1) {
+            msg = '已拒绝定位权限，请在浏览器设置中允许定位';
+          } else if (error.code === 2) {
+            msg = '无法获取位置，请检查定位服务';
+          } else if (error.code === 3) {
+            msg = '定位超时，请稍后重试';
+          }
+          Taro.showToast({ title: msg, icon: 'none', duration: 3000 });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+      return;
+    }
+    
+    // 小程序环境 - 先检查定位权限状态
+    console.log('使用小程序定位');
+    try {
+      const settingRes = await Taro.getSetting();
+      const authSetting = settingRes.authSetting;
+      
+      // 如果没有定位权限，发起授权请求
+      if (!authSetting['scope.userLocation']) {
+        await Taro.authorize({
+          scope: 'scope.userLocation'
+        });
+      }
+    } catch (authError) {
+      // 用户拒绝授权，引导用户手动打开设置
+      const res = await Taro.showModal({
+        title: '需要定位权限',
+        content: '定位功能需要您的授权才能使用，是否前往设置页面开启？',
+        confirmText: '去设置',
+        cancelText: '取消'
+      });
+      
+      if (res.confirm) {
+        await Taro.openSetting();
+      }
+      return;
+    }
+
+    // 权限获取成功，开始定位
     Taro.getLocation({
       type: 'wgs84',
       success: async (res) => {
@@ -90,8 +175,18 @@ const Index = () => {
           Taro.showToast({ title: '定位失败，请稍后重试', icon: 'none' });
         }
       },
-      fail: () => {
-        Taro.showToast({ title: '定位失败，请检查权限', icon: 'none' });
+      fail: async () => {
+        // 定位失败，引导用户去设置页面
+        const res = await Taro.showModal({
+          title: '定位失败',
+          content: '无法获取您的位置信息，是否前往设置页面开启定位权限？',
+          confirmText: '去设置',
+          cancelText: '取消'
+        });
+        
+        if (res.confirm) {
+          await Taro.openSetting();
+        }
       }
     });
   };
