@@ -32,6 +32,9 @@ const HotelList = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  // 标记是否有活跃的搜索/筛选（用于置顶显示）
+  const [isSearchResult, setIsSearchResult] = useState(false);
   
   // 排序状态
   const [showSort, setShowSort] = useState(false)
@@ -119,6 +122,15 @@ const HotelList = () => {
     if (loading || !hasMore) return;
     setLoading(true);
 
+    // 检测是否有活跃的搜索/筛选条件
+    const hasActiveFilters = !!(
+      searchParams.keyword ||
+      (searchParams.tags && searchParams.tags.length > 0) ||
+      (searchParams.stars && searchParams.stars.length > 0) ||
+      searchParams.priceRange ||
+      (searchParams.city && searchParams.city !== '上海市')
+    );
+
     try {
       const res = await hotelService.getHotelsByPage(
         currentPage,
@@ -134,6 +146,7 @@ const HotelList = () => {
       const totalCount = res?.total ?? 0
 
       setTotal(totalCount);
+      setIsSearchResult(hasActiveFilters);
 
       if (newList.length < 5) {
         setHasMore(false); // 不满5条说明到底了
@@ -366,6 +379,7 @@ const HotelList = () => {
             index={index}
             startDate={searchParams.startDate}
             endDate={searchParams.endDate}
+            isHighlight={isSearchResult && index < 3}
           />
         ))}
       </View>

@@ -5,6 +5,33 @@
   overflow: hidden;
   display: flex;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+
+  // 搜索结果置顶样式
+  &.highlight {
+    border: 2rpx solid #ff6b00;
+    box-shadow: 0 4rpx 16rpx rgba(255, 107, 0, 0.2);
+
+    .info {
+      .name-row {
+        .name {
+          color: #ff6b00;
+        }
+      }
+    }
+  }
+
+  .highlight-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #ff6b00, #ff8533);
+    color: #fff;
+    font-size: 20rpx;
+    padding: 4rpx 16rpx;
+    border-radius: 16rpx 0 16rpx 0;
+    z-index: 1;
+  }
 
   .cover {
     width: 240rpx;

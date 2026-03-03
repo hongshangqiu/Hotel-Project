@@ -182,7 +182,7 @@ const HotelDetail = () => {
           <View className='hotel-header'>
             <View className='hotel-title-row'>
               <Text className='hotel-name'>{hotel?.nameCn || '-'}</Text>
-              <Text className='hotel-star'><StarRating rating={hotel?.star || 0} size="medium" /></Text>
+              <Text className='hotel-star'><StarRating rating={Number(hotel?.star) || 0} size="medium" /></Text>
             </View>
 
             <Text className='hotel-enname'>{hotel?.nameEn || '-'}</Text>
@@ -244,7 +244,7 @@ const HotelDetail = () => {
               <View className='detail-line'>英文名：{hotel?.nameEn || '-'}</View>
               <View className='detail-line'>开业时间：{hotel?.openingTime || '-'}</View>
               <View className='detail-line'>地址：{hotel?.address || '-'}</View>
-              <View className='detail-line'>星级：<StarRating rating={hotel?.star || 0} size="small" /></View>
+              <View className='detail-line'>星级：<StarRating rating={Number(hotel?.star) || 0} size="small" /></View>
               <View className='detail-line'>
                 起价：<Text className='detail-price'>¥{minPriceInfo.price}</Text>
               </View>

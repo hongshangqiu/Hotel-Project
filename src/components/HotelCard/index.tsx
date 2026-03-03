@@ -12,10 +12,11 @@ interface HotelCardProps {
   index: number;
   startDate?: string;
   endDate?: string;
+  isHighlight?: boolean;
 }
 
 // 使用 memo 包装组件，只有当 hotel 或 index 变化时才重新渲染
-const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate }) => {
+const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate, isHighlight = false }) => {
   const handleClick = useCallback(() => {
     LocalStorage.set(STORAGE_KEYS.USER_VIEW_HOTEL_ID, hotel.id);
     Taro.navigateTo({ url: '/pages/user/detail/index' });
@@ -28,12 +29,17 @@ const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate }) =>
   }, [hotel.price, hotel.priceConfig, startDate, endDate]);
 
   return (
-    <View 
-      key={`${hotel.id}-${index}`} 
-      className='hotel-card'
+    <View
+      key={`${hotel.id}-${index}`}
+      className={`hotel-card ${isHighlight ? 'highlight' : ''}`}
       onClick={handleClick}
     >
-      <Image 
+      {isHighlight && (
+        <View className="highlight-badge">
+          <Text>推荐</Text>
+        </View>
+      )}
+      <Image
         className='cover' 
         src={hotel.imageUrl} 
         mode='aspectFill'
@@ -42,7 +48,7 @@ const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate }) =>
       <View className='info'>
         <View className='name-row'>
           <Text className='name'>{hotel.nameCn}</Text>
-          <StarRating rating={hotel.star || 0} size="small" />
+          <StarRating rating={Number(hotel.star) || 0} size="small" />
         </View>
         <Text className='address'>{hotel.address}</Text>
         <View className='price-row'>
@@ -61,7 +67,8 @@ const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate }) =>
     prevProps.hotel.nameCn === nextProps.hotel.nameCn &&
     prevProps.hotel.star === nextProps.hotel.star &&
     prevProps.startDate === nextProps.startDate &&
-    prevProps.endDate === nextProps.endDate
+    prevProps.endDate === nextProps.endDate &&
+    prevProps.isHighlight === nextProps.isHighlight
   );
 });
 
