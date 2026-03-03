@@ -455,22 +455,22 @@ const HotelManage = () => {
               </Col>
             </Row>
             <Form.Item label='详细地址' name='address' rules={[{ required: true, message: '必填' }]}>
-              <View className='address-input-row'>
-                <Input 
-                  className='address-input' 
-                  placeholder='请输入详细地理位置' 
-                />
-                <Button 
-                  size='small' 
-                  type='primary' 
-                  loading={isLocating}
-                  onClick={handleGetLocation}
-                >
-                  {isLocating ? '定位中' : '📍 获取定位'}
-                </Button>
-              </View>
-              {locationError && <Text className='location-error'>{locationError}</Text>}
+              <Input
+                className='address-input'
+                placeholder='请输入详细地理位置'
+              />
             </Form.Item>
+            <View className='address-input-row'>
+              <Button
+                size='small'
+                type='primary'
+                loading={isLocating}
+                onClick={handleGetLocation}
+              >
+                {isLocating ? '定位中' : '📍 获取定位'}
+              </Button>
+            </View>
+            {locationError && <Text className='location-error'>{locationError}</Text>}
           </View>
 
           <View className='manage-card'>
