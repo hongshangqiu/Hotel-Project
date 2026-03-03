@@ -318,7 +318,7 @@ const AuditPage = () => {
             className="search-input"
             placeholder="搜索酒店名称"
             value={searchKeyword}
-            onInput={(e) => setSearchKeyword(e.detail.value)}
+            onInput={(e: any) => setSearchKeyword(e.detail?.value ?? e.target?.value ?? e)}
             onConfirm={handleSearch}
           />
           <Button type="primary" size="small" onClick={handleSearch}>
@@ -574,7 +574,7 @@ const AuditPage = () => {
               className="other-reason-input"
               placeholder="请输入其他原因"
               value={rejectOtherReason}
-              onInput={(e) => setRejectOtherReason(e.detail.value)}
+              onInput={(e: any) => setRejectOtherReason(e.detail?.value ?? e.target?.value ?? e)}
             />
           )}
         </View>
@@ -609,7 +609,7 @@ const AuditPage = () => {
             className="other-reason-input"
             placeholder="请输入其他原因"
             value={offlineOtherReason}
-            onInput={(e) => setOfflineOtherReason(e.detail.value)}
+            onInput={(e: any) => setOfflineOtherReason(e.detail?.value ?? e.target?.value ?? e)}
           />
         </View>
       </Dialog>
