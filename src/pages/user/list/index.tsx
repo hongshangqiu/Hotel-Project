@@ -359,7 +359,13 @@ const HotelList = () => {
         )}
         {/* 使用 useMemo 缓存酒店列表渲染结果 */}
         {list.map((hotel, index) => (
-          <HotelCard key={`${hotel.id}-${index}`} hotel={hotel} index={index} />
+          <HotelCard
+            key={`${hotel.id}-${index}`}
+            hotel={hotel}
+            index={index}
+            startDate={searchParams.startDate}
+            endDate={searchParams.endDate}
+          />
         ))}
       </View>
 

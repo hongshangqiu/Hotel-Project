@@ -10,20 +10,22 @@ import './index.scss';
 interface HotelCardProps {
   hotel: IHotel;
   index: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 // 使用 memo 包装组件，只有当 hotel 或 index 变化时才重新渲染
-const HotelCard = memo<HotelCardProps>(({ hotel, index }) => {
+const HotelCard = memo<HotelCardProps>(({ hotel, index, startDate, endDate }) => {
   const handleClick = useCallback(() => {
     LocalStorage.set(STORAGE_KEYS.USER_VIEW_HOTEL_ID, hotel.id);
     Taro.navigateTo({ url: '/pages/user/detail/index' });
   }, [hotel.id]);
 
-  // 计算动态价格（用户端只显示最终价格）
+  // 计算动态价格（用户端只显示最终价格），使用传入的日期或默认日期
   const displayPrice = useMemo(() => {
-    const result = calculateHotelMinPrice(hotel);
+    const result = calculateHotelMinPrice(hotel, startDate, endDate);
     return result.price;
-  }, [hotel.price, hotel.priceConfig]);
+  }, [hotel.price, hotel.priceConfig, startDate, endDate]);
 
   return (
     <View 
@@ -57,7 +59,9 @@ const HotelCard = memo<HotelCardProps>(({ hotel, index }) => {
     prevProps.hotel.id === nextProps.hotel.id &&
     prevProps.hotel.price === nextProps.hotel.price &&
     prevProps.hotel.nameCn === nextProps.hotel.nameCn &&
-    prevProps.hotel.star === nextProps.hotel.star
+    prevProps.hotel.star === nextProps.hotel.star &&
+    prevProps.startDate === nextProps.startDate &&
+    prevProps.endDate === nextProps.endDate
   );
 });
 
